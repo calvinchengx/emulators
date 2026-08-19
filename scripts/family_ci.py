@@ -106,25 +106,39 @@ def rollups(owner, names):
     return out
 
 
-def workflows(owner, name, window=100):
+def workflows(owner, name):
     """Question B: latest COMPLETED run per workflow on main.
+
+    Asks PER WORKFLOW rather than filtering one shared page of runs. The shared
+    page is what the first version did and it silently reported stale results:
+    fabric-emulator has 2030 completed runs on main, so 100 of them span about
+    34 hours, and any workflow quieter than that is represented in the window
+    by an OLD run. It reported sempy.yml as failing off an August 12 run when
+    the workflow had gone green on August 19.
+
+    The subtler half is why a bigger page would not have fixed it. The API
+    pages by created_at while the freshest result is the greatest updated_at,
+    so a long run that started before the cutoff but finished after it is
+    absent from the page no matter how the page is sized, and a staler run
+    inside the window wins the comparison. One request per workflow, newest
+    first, has no window to fall out of.
 
     Completed only. An earlier watcher took the newest run whatever its status,
     so an in-flight retry cleared a known failure and it announced the red was
     gone while main was still broken.
-
-    Grouped by workflow_id, not name: Dependabot's run names carry the update
-    number, so grouping by name splits one workflow into dozens.
     """
-    d = gh("api", f"repos/{owner}/{name}/actions/runs"
-                  f"?branch=main&status=completed&per_page={window}")
+    meta = gh("api", f"repos/{owner}/{name}/actions/workflows")
     best = {}
-    for run in d.get("workflow_runs", []):
-        if run["path"].startswith(GENERATED_PREFIX):
+    for wf in meta.get("workflows", []):
+        # GitHub generates these (Dependabot, dependency graph); they are not
+        # the repo's own CI and their run names carry the update number.
+        if wf["state"] != "active" or wf["path"].startswith(GENERATED_PREFIX):
             continue
-        k = run["workflow_id"]
-        if k not in best or run["updated_at"] > best[k]["updated_at"]:
-            best[k] = run
+        runs = gh("api", f"repos/{owner}/{name}/actions/workflows/{wf['id']}/runs"
+                         f"?branch=main&status=completed&per_page=1")
+        got = runs.get("workflow_runs") or []
+        if got:
+            best[wf["id"]] = got[0]
     return [
         {
             "file": r["path"].rsplit("/", 1)[-1],
