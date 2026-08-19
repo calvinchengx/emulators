@@ -5,10 +5,11 @@ Three doors in. Pick by what you are building.
 Each repo carries its own authoritative quickstart, so this page routes rather
 than duplicates: a command copied here would drift from the repo that owns it.
 
-## Door 1: the whole family
+## Door 1: the Azure family, in one command
 
-The certified set in one command. Start here if you are building an
-application that needs identity, authorization or secrets.
+The **certified Azure set**: six emulators, pinned and chain-tested together.
+Start here if you are building an application that needs identity,
+authorization or secrets.
 
 ```sh
 git clone https://github.com/calvinchengx/azure-emulators
@@ -22,6 +23,15 @@ docker compose --profile databricks up   # ...or the Databricks workspace
 The compose defaults are the bill of materials, a combination of released
 images chain-tested together. A bare `docker compose up` runs exactly that set.
 
+**"The family" means those six, not every emulator here.** The line is
+bill-of-materials membership: an emulator is in it when its version is pinned
+in this compose, gated by the pins check and exercised by the chain test.
+`snowflake-emulator` keeps the same discipline (graded ledger, witness
+manifest, checker enforcing both) and is deliberately outside it, so it does
+not appear in this door. Emulators outside the Azure BOM run standalone through
+Door 2, which is where any future non-Microsoft one will arrive too. [The
+adjacent one](02-the-emulators.md) makes the full argument.
+
 ARM governs the vault, as it does in Azure: role assignments decide who may do
 what, and no assignment means no access. The stack seeds what the portal gives
 you when you create a vault, so the quickstart works without hand-writing a
@@ -34,8 +44,8 @@ Full detail: [azure-emulators docs](https://calvinchengx.github.io/azure-emulato
 
 ## Door 2: one emulator
 
-Nothing requires the family. Each emulator ships its own image and its own
-quickstart, and the single-service cases are real:
+Nothing requires the family, and not every emulator is in it. Each ships its
+own image and its own quickstart, and the single-service cases are real:
 
 | You are working on | Run |
 |---|---|
@@ -45,10 +55,13 @@ quickstart, and the single-service cases are real:
 | APIM policies and the gateway | [azure-apim-emulator](https://calvinchengx.github.io/azure-apim-emulator/) |
 | Fabric workspaces, items, OneLake | [fabric-emulator](https://calvinchengx.github.io/fabric-emulator/) |
 | Databricks jobs and workspace REST | [databricks-emulator](https://calvinchengx.github.io/databricks-emulator/) |
-| Snowflake SQL and account objects | [snowflake-emulator](https://github.com/calvinchengx/snowflake-emulator) |
+| Snowflake SQL and account objects | [snowflake-emulator](https://github.com/calvinchengx/snowflake-emulator), outside the Azure BOM, so it runs standalone rather than through Door 1 |
 
 entra-emulator is the highest-value one to adopt first, because identity is
 usually the first thing that blocks local development.
+
+Every row above links to a published docs site except snowflake, which is a
+repo link because it has no site yet.
 
 ## Door 3: a working data product
 
