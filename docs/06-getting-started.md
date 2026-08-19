@@ -60,9 +60,6 @@ own image and its own quickstart, and the single-service cases are real:
 entra-emulator is the highest-value one to adopt first, because identity is
 usually the first thing that blocks local development.
 
-Every row above links to a published docs site except snowflake, which is a
-repo link because it has no site yet.
-
 ## Door 3: a working data product
 
 Start from a built platform and swap the product for your own. A platform takes
