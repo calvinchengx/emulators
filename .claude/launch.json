@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "emulators-docs",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "emulators-docs", "dev", "--port", "4331"],
+      "port": 4331
+    }
+  ]
+}
