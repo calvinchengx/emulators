@@ -42,7 +42,7 @@
 
     {"name": "fabric-platform-airflow3",            "tier": "platform", "engine": "fabric",     "orchestrator": "airflow3",           "status": "built",    "ci": "required"},
     {"name": "fabric-platform-notebook-pipelines",  "tier": "platform", "engine": "fabric",     "orchestrator": "notebook-pipelines", "status": "built",    "ci": "required"},
-    {"name": "fabric-platform-airflow-builtin",     "tier": "platform", "engine": "fabric",     "orchestrator": "airflow-builtin",    "status": "built",    "ci": "missing"},
+    {"name": "fabric-platform-airflow-builtin",     "tier": "platform", "engine": "fabric",     "orchestrator": "airflow-builtin",    "status": "built",    "ci": "required"},
     {"name": "databricks-platform-jobs",            "tier": "platform", "engine": "databricks", "orchestrator": "jobs",               "status": "built",    "ci": "required"},
     {"name": "databricks-platform-airflow3",        "tier": "platform", "engine": "databricks", "orchestrator": "airflow3",           "status": "built",    "ci": "required"},
     {"name": "snowflake-platform-tasks",            "tier": "platform", "engine": "snowflake",  "orchestrator": "tasks",              "status": "built",    "ci": "required"},
