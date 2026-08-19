@@ -144,7 +144,7 @@ def age_days(iso, now):
     return (now - t).total_seconds() / 86400
 
 
-def classify(member, roll, wfs, stale_days, now):
+def classify(member, roll, wfs, stale_days, now, others_red=False):
     """One verdict per member. Every branch is a state a reader can act on."""
     expect = member["ci"]
     reds = [w for w in wfs if w["conclusion"] == "failure" or w["conclusion"] == "timed_out"]
@@ -164,7 +164,17 @@ def classify(member, roll, wfs, stale_days, now):
         return (ERROR if wfs else OK), (
             "reserved but has CI, registry stale" if wfs else "reserved, nothing to verify")
     if reds:
-        return BAD, ", ".join(f"{w['file']}={w['conclusion']}" for w in reds)
+        note = ", ".join(f"{w['file']}={w['conclusion']}" for w in reds)
+        # This repo's sweep FAILS BY DESIGN when a member is red, so its own
+        # row would otherwise report the ecosystem's breakage a second time as
+        # though the hub were broken too. Say which it is, but only when
+        # another member is actually red: if nothing else is failing and the
+        # reporter still fails, that IS a defect here (a gate, or the script)
+        # and must not be explained away.
+        reporter = member.get("reporter")
+        if reporter and others_red and [w["file"] for w in reds] == [reporter]:
+            return BAD, f"{note} (mirrors the rows below, not a defect here)"
+        return BAD, note
     if neutrals:
         return MEH, ", ".join(f"{w['file']}={w['conclusion']}" for w in neutrals)
     if oldest is not None and oldest > stale_days:
@@ -192,10 +202,19 @@ def collect(owner, members, stale_days, require_rollup=True):
         print(f"family_ci: rollup unavailable, reporting per-workflow only "
               f"({e.detail[:120]})", file=sys.stderr)
         roll = {}
+    # Gather first, classify second: whether a reporter's failure is a mirror
+    # or a real defect depends on the other members, so no row can be judged
+    # until every row has been fetched.
+    gathered = [(m, workflows(owner, m["name"])) for m in members]
+    others_red = {
+        m["name"]: any(
+            any(w["conclusion"] in ("failure", "timed_out") for w in owfs)
+            for om, owfs in gathered if om["name"] != m["name"])
+        for m, _ in gathered}
     rows = []
-    for m in members:
-        wfs = workflows(owner, m["name"])
-        verdict, note = classify(m, roll.get(m["name"], {}), wfs, stale_days, now)
+    for m, wfs in gathered:
+        verdict, note = classify(m, roll.get(m["name"], {}), wfs, stale_days, now,
+                                 others_red=others_red[m["name"]])
         r = roll.get(m["name"], {})
         rows.append({
             "name": m["name"], "tier": m["tier"], "ci": m["ci"],

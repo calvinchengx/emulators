@@ -93,7 +93,7 @@ gut.
 
 ✅ built · ⬜ reserved, holding a README and a LICENSE
 
-4 built repos have **no CI at all** and nothing verifies them: `contoso-sources`, `contoso-data-product-fabric-airflow-builtin`, `fabric-platform-airflow-builtin`, `databricks-platform-airflow3`. See
+1 built repos have **no CI at all** and nothing verifies them: `fabric-platform-airflow-builtin`. See
 [CI status](08-ci-status.md) for the live sweep across every member.
 
 <!-- END matrix -->
