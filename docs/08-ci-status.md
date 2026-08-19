@@ -84,6 +84,13 @@ Four repos currently sit at `missing`: `contoso-sources`, the
 All four carry real code that nothing verifies. `contoso-sources` is the one
 that matters most, since every platform generates its vendor stack from it.
 
+**Completeness is checked, not assumed.** `scripts/check_registry.py` asks
+GitHub for every repo whose name fits the family's conventions and fails when
+one has no registry entry, or when an entry has no repo behind it. A directory
+cannot notice its own omissions by looking at itself: a member nobody added is
+simply absent, and every page still renders perfectly. Both directions are
+verified by deliberately breaking them.
+
 The registry is also the source of truth for **status**, derived from what is on
 main rather than from what a README claims. Several READMEs still say
 "Reserved. It holds nothing but this file and a LICENSE" over a tree carrying

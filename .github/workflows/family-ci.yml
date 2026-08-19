@@ -44,6 +44,20 @@ jobs:
       - name: Committed tables match the registry
         run: ./scripts/render_tables.py --check
 
+      # A registry can be accurate and still incomplete, and this repo cannot
+      # detect that by looking at itself: a member nobody added is simply
+      # absent, and the front door renders perfectly without it. So ask GitHub.
+      - name: The registry lists every ecosystem repo
+        env:
+          GH_TOKEN: ${{ secrets.FAMILY_CI_TOKEN || github.token }}
+        run: ./scripts/check_registry.py
+
+      # docs/05 quotes the family's evidence numbers. Hand-copied, they went
+      # stale within four hours of being written, on a page that tells readers
+      # not to trust hand-copied numbers.
+      - name: The evidence table matches family_parity.py
+        run: ./scripts/render_evidence.py --check
+
       - name: Self-test the gate before trusting it
         env:
           GH_TOKEN: ${{ secrets.FAMILY_CI_TOKEN || github.token }}
