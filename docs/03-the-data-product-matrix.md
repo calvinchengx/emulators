@@ -82,14 +82,14 @@ gut.
 | Engine | Orchestrator | Leaf product | Platform |
 |---|---|---|---|
 | Fabric | Airflow 3 | ✅ [contoso-data-product-fabric-airflow3](https://github.com/calvinchengx/contoso-data-product-fabric-airflow3) | ✅ [fabric-platform-airflow3](https://github.com/calvinchengx/fabric-platform-airflow3) |
-| Fabric | Notebooks + Data Pipelines | 🚧 [contoso-data-product-fabric-notebook-pipelines](https://github.com/calvinchengx/contoso-data-product-fabric-notebook-pipelines) | ✅ [fabric-platform-notebook-pipelines](https://github.com/calvinchengx/fabric-platform-notebook-pipelines) |
+| Fabric | Notebooks + Data Pipelines | ⬜ [contoso-data-product-fabric-notebook-pipelines](https://github.com/calvinchengx/contoso-data-product-fabric-notebook-pipelines) | ✅ [fabric-platform-notebook-pipelines](https://github.com/calvinchengx/fabric-platform-notebook-pipelines) |
 | Fabric | Built-in Airflow (`ApacheAirflowJob`) | ⬜ [contoso-data-product-fabric-airflow-builtin](https://github.com/calvinchengx/contoso-data-product-fabric-airflow-builtin) | ⬜ [fabric-platform-airflow-builtin](https://github.com/calvinchengx/fabric-platform-airflow-builtin) |
 | Databricks | Databricks Jobs | ✅ [contoso-data-product-databricks-jobs](https://github.com/calvinchengx/contoso-data-product-databricks-jobs) | ✅ [databricks-platform-jobs](https://github.com/calvinchengx/databricks-platform-jobs) |
-| Databricks | Airflow 3 | ⬜ [contoso-data-product-databricks-airflow3](https://github.com/calvinchengx/contoso-data-product-databricks-airflow3) | ⬜ [databricks-platform-airflow3](https://github.com/calvinchengx/databricks-platform-airflow3) |
+| Databricks | Airflow 3 | ✅ [contoso-data-product-databricks-airflow3](https://github.com/calvinchengx/contoso-data-product-databricks-airflow3) | ⬜ [databricks-platform-airflow3](https://github.com/calvinchengx/databricks-platform-airflow3) |
 | Snowflake | Snowflake Tasks | ⬜ [contoso-data-product-snowflake-tasks](https://github.com/calvinchengx/contoso-data-product-snowflake-tasks) | ✅ [snowflake-platform-tasks](https://github.com/calvinchengx/snowflake-platform-tasks) |
 | Snowflake | Airflow 3 | ⬜ [contoso-data-product-snowflake-airflow3](https://github.com/calvinchengx/contoso-data-product-snowflake-airflow3) | ⬜ [snowflake-platform-airflow3](https://github.com/calvinchengx/snowflake-platform-airflow3) |
 
-✅ built · 🚧 in progress · ⬜ reserved
+✅ built · ⬜ reserved, holding a README and a LICENSE
 
 Reserved repos hold a README and a LICENSE. They exist so the shape of the
 matrix is visible before every cell is filled: a reader can see what has been
@@ -101,8 +101,16 @@ planned or impossible.
 **[fabric-platform-notebook-pipelines](https://github.com/calvinchengx/fabric-platform-notebook-pipelines)**
 is the fullest one: four real vendor sources through a complete medallion into
 a Fabric Lakehouse, a semantic model serving Power BI, and the lineage
-catalogued in OpenMetadata. It runs against a published fabric-emulator release
-and, with one flag, against real Fabric.
+catalogued in OpenMetadata. It runs against a published fabric-emulator
+release, never a checkout, so anything that works there works for anyone, and
+with one flag it runs against real Fabric.
+
+It is also the exception to the separation described above: it predates the
+platform/product split and carries its product inline, which is why its leaf
+cell is still reserved. Read it as the end-to-end proof rather than as the
+model of the platform/product boundary. For that,
+[fabric-platform-airflow3](https://github.com/calvinchengx/fabric-platform-airflow3)
+is the cleaner example.
 
 **[fabric-platform-airflow3](https://github.com/calvinchengx/fabric-platform-airflow3)**
 is the platform reduced to its essence: Airflow 3 plus a Fabric target you can

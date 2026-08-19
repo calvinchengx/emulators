@@ -101,14 +101,14 @@ One product, every engine × orchestrator cell. Leaves are
 | Engine | Orchestrator | Leaf product | Platform |
 |---|---|---|---|
 | Fabric | Airflow 3 | ✅ [leaf](https://github.com/calvinchengx/contoso-data-product-fabric-airflow3) | ✅ [platform](https://github.com/calvinchengx/fabric-platform-airflow3) |
-| Fabric | Notebooks + Data Pipelines | 🚧 [leaf](https://github.com/calvinchengx/contoso-data-product-fabric-notebook-pipelines) | ✅ [platform](https://github.com/calvinchengx/fabric-platform-notebook-pipelines) |
+| Fabric | Notebooks + Data Pipelines | ⬜ [leaf](https://github.com/calvinchengx/contoso-data-product-fabric-notebook-pipelines) | ✅ [platform](https://github.com/calvinchengx/fabric-platform-notebook-pipelines) |
 | Fabric | Built-in Airflow | ⬜ [leaf](https://github.com/calvinchengx/contoso-data-product-fabric-airflow-builtin) | ⬜ [platform](https://github.com/calvinchengx/fabric-platform-airflow-builtin) |
 | Databricks | Databricks Jobs | ✅ [leaf](https://github.com/calvinchengx/contoso-data-product-databricks-jobs) | ✅ [platform](https://github.com/calvinchengx/databricks-platform-jobs) |
-| Databricks | Airflow 3 | ⬜ [leaf](https://github.com/calvinchengx/contoso-data-product-databricks-airflow3) | ⬜ [platform](https://github.com/calvinchengx/databricks-platform-airflow3) |
+| Databricks | Airflow 3 | ✅ [leaf](https://github.com/calvinchengx/contoso-data-product-databricks-airflow3) | ⬜ [platform](https://github.com/calvinchengx/databricks-platform-airflow3) |
 | Snowflake | Snowflake Tasks | ⬜ [leaf](https://github.com/calvinchengx/contoso-data-product-snowflake-tasks) | ✅ [platform](https://github.com/calvinchengx/snowflake-platform-tasks) |
 | Snowflake | Airflow 3 | ⬜ [leaf](https://github.com/calvinchengx/contoso-data-product-snowflake-airflow3) | ⬜ [platform](https://github.com/calvinchengx/snowflake-platform-airflow3) |
 
-✅ built · 🚧 in progress · ⬜ reserved
+✅ built · ⬜ reserved, holding a README and a LICENSE
 
 ## Where next
 

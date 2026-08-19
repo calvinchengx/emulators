@@ -52,12 +52,13 @@ usually the first thing that blocks local development.
 
 ## Door 3: a working data product
 
-Start from a built platform and swap the product for your own. Every platform
-takes `PRODUCT=<path>` and contains no product logic of its own.
+Start from a built platform and swap the product for your own. A platform takes
+`PRODUCT=<path>` and contains no product logic of its own, with one exception
+noted below.
 
 | Platform | What it demonstrates |
 |---|---|
-| [fabric-platform-notebook-pipelines](https://github.com/calvinchengx/fabric-platform-notebook-pipelines) | The fullest one: four vendors, full medallion, semantic model, Power BI, OpenMetadata lineage |
+| [fabric-platform-notebook-pipelines](https://github.com/calvinchengx/fabric-platform-notebook-pipelines) | The fullest one: four vendors, full medallion, semantic model, Power BI, OpenMetadata lineage. Carries its product inline rather than taking `PRODUCT=` |
 | [fabric-platform-airflow3](https://github.com/calvinchengx/fabric-platform-airflow3) | The platform reduced to essentials: Airflow 3 plus a pinnable Fabric target, no product inside it |
 | [databricks-platform-jobs](https://github.com/calvinchengx/databricks-platform-jobs) | The same product on Databricks Jobs, with Unity Catalog |
 | [snowflake-platform-tasks](https://github.com/calvinchengx/snowflake-platform-tasks) | Gold-only on Snowflake, switchable to a real account |

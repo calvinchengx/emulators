@@ -150,9 +150,9 @@ something real can be built on them.
 The [Contoso data product](03-the-data-product-matrix.md) is that answer: four
 vendor source systems through a full medallion into gold, with data contracts
 and an expected-numbers oracle, running on Fabric, on Databricks and on
-Snowflake from **one shared core**. The platforms that run it are separate
-repos containing no product logic, so you can point one at your own data
-product with `PRODUCT=<path>`.
+Snowflake from **one shared core**. The platforms that run it are, with one
+exception, separate repos containing no product logic, so you can point one at
+your own data product with `PRODUCT=<path>`.
 
 No other Azure emulator project ships a worked data product across multiple
 analytics engines, because most of them are not aimed at the data estate at

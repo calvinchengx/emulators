@@ -94,6 +94,17 @@ business case. It happened here because each attempt cost seconds instead of a
 tenant round trip, and because `compare_products.py` could tell an agent it was
 wrong without a human reading dataframes.
 
+The fullest single demonstration is
+[fabric-platform-notebook-pipelines](https://github.com/calvinchengx/fabric-platform-notebook-pipelines),
+which describes what it cost to build in its own README: months of tenant-bound
+trial and error, compressed into days by iterating offline first. It goes from
+real source systems through a medallion lakehouse to a semantic model and Power
+BI, with lineage in OpenMetadata, and it runs against a **published**
+fabric-emulator release rather than a checkout. That last constraint matters
+more than it looks: a consumer with no access to the emulator's source proves
+the loop is reproducible by anyone, not just by whoever can rebuild both
+sides.
+
 ## Working à la carte
 
 The full family is for when the interaction between services is what matters.

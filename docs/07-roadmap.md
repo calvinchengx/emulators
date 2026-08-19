@@ -47,11 +47,22 @@ one, and it would change what the word "family" means in the parity report.
 
 ## Open directions
 
-**Filling the matrix.** Four of the fourteen data product cells are built. The
-reserved cells exist so the shape is visible; the next ones to fill are the
-Fabric built-in Airflow path and the Databricks and Snowflake Airflow 3 cells,
-which complete the orchestrator comparison across all three engines. See
+**Filling the matrix.** Seven of the fourteen repos in the matrix are built:
+three leaf products and four platforms. The reserved ones exist so the shape is
+visible before every cell is filled.
+
+The most useful next step is a **pairing**, not a repo. Three cells hold
+exactly one built half: the Databricks Airflow 3 leaf exists with no platform
+to mount it, and the Snowflake Tasks and Fabric notebook-pipelines platforms
+exist with their leaf cells still reserved. Completing a pair is what turns a
+cell into a runnable comparison, which is the only thing the matrix is for. See
 [the matrix](03-the-data-product-matrix.md).
+
+**Extracting the flagship's product.** `fabric-platform-notebook-pipelines`
+predates the platform/product split and carries its product inline, which is
+why its leaf cell is still reserved. Splitting it would make the fullest
+end-to-end demonstration in the ecosystem also the clearest illustration of the
+separation.
 
 **Differential evidence against real Azure.** The strongest caveat on every
 parity number today is that green means witnessed locally against real clients,

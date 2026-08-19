@@ -126,14 +126,14 @@ vendor is where a comparison dies.
 | Engine | Orchestrator | Leaf product | Platform |
 |---|---|---|---|
 | Fabric | Airflow 3 | ✅ [contoso-data-product-fabric-airflow3](https://github.com/calvinchengx/contoso-data-product-fabric-airflow3) | ✅ [fabric-platform-airflow3](https://github.com/calvinchengx/fabric-platform-airflow3) |
-| Fabric | Notebooks + Data Pipelines | 🚧 [contoso-data-product-fabric-notebook-pipelines](https://github.com/calvinchengx/contoso-data-product-fabric-notebook-pipelines) | ✅ [fabric-platform-notebook-pipelines](https://github.com/calvinchengx/fabric-platform-notebook-pipelines) |
+| Fabric | Notebooks + Data Pipelines | ⬜ [contoso-data-product-fabric-notebook-pipelines](https://github.com/calvinchengx/contoso-data-product-fabric-notebook-pipelines) | ✅ [fabric-platform-notebook-pipelines](https://github.com/calvinchengx/fabric-platform-notebook-pipelines) |
 | Fabric | Built-in Airflow | ⬜ [contoso-data-product-fabric-airflow-builtin](https://github.com/calvinchengx/contoso-data-product-fabric-airflow-builtin) | ⬜ [fabric-platform-airflow-builtin](https://github.com/calvinchengx/fabric-platform-airflow-builtin) |
 | Databricks | Databricks Jobs | ✅ [contoso-data-product-databricks-jobs](https://github.com/calvinchengx/contoso-data-product-databricks-jobs) | ✅ [databricks-platform-jobs](https://github.com/calvinchengx/databricks-platform-jobs) |
-| Databricks | Airflow 3 | ⬜ [contoso-data-product-databricks-airflow3](https://github.com/calvinchengx/contoso-data-product-databricks-airflow3) | ⬜ [databricks-platform-airflow3](https://github.com/calvinchengx/databricks-platform-airflow3) |
+| Databricks | Airflow 3 | ✅ [contoso-data-product-databricks-airflow3](https://github.com/calvinchengx/contoso-data-product-databricks-airflow3) | ⬜ [databricks-platform-airflow3](https://github.com/calvinchengx/databricks-platform-airflow3) |
 | Snowflake | Snowflake Tasks | ⬜ [contoso-data-product-snowflake-tasks](https://github.com/calvinchengx/contoso-data-product-snowflake-tasks) | ✅ [snowflake-platform-tasks](https://github.com/calvinchengx/snowflake-platform-tasks) |
 | Snowflake | Airflow 3 | ⬜ [contoso-data-product-snowflake-airflow3](https://github.com/calvinchengx/contoso-data-product-snowflake-airflow3) | ⬜ [snowflake-platform-airflow3](https://github.com/calvinchengx/snowflake-platform-airflow3) |
 
-✅ built · 🚧 in progress · ⬜ reserved
+✅ built · ⬜ reserved, holding a README and a LICENSE
 
 Reserved cells are real repos holding a README and a LICENSE. They exist so the
 shape of the matrix is visible before every cell is filled, and so a cell can
