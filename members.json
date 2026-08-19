@@ -1,0 +1,51 @@
+{
+  "$comment": [
+    "The ecosystem registry: every repo, its tier, and whether CI is expected.",
+    "",
+    "status and ci are derived from what is ON MAIN, not from what a README",
+    "claims. Several READMEs still say 'Reserved. It holds nothing but this file",
+    "and a LICENSE' over a tree carrying dozens of files, and trusting that prose",
+    "put two wrong statuses into this repo's first commit.",
+    "",
+    "  status  built     substantive files on main",
+    "          reserved  README and LICENSE only, deliberately",
+    "  ci      required  a red workflow here is a family-level failure",
+    "          missing   substantive code with no workflow at all: a gap to close",
+    "          none      nothing to verify yet, correct for a reserved repo",
+    "",
+    "'missing' is the entry that earns this file. Without a declared expectation,",
+    "a repo with no CI and a repo whose CI was deleted print the same blank row."
+  ],
+  "owner": "calvinchengx",
+  "members": [
+    {"name": "entra-emulator",             "tier": "emulator",    "status": "built", "ci": "required", "role": "Entra ID, the STS"},
+    {"name": "arm-emulator",               "tier": "emulator",    "status": "built", "ci": "required", "role": "ARM control plane + RBAC"},
+    {"name": "azure-keyvault-emulator",    "tier": "emulator",    "status": "built", "ci": "required", "role": "Key Vault data plane"},
+    {"name": "azure-apim-emulator",        "tier": "emulator",    "status": "built", "ci": "required", "role": "API Management"},
+    {"name": "fabric-emulator",            "tier": "emulator",    "status": "built", "ci": "required", "role": "Microsoft Fabric + OneLake"},
+    {"name": "databricks-emulator",        "tier": "emulator",    "status": "built", "ci": "required", "role": "Databricks workspace REST"},
+    {"name": "snowflake-emulator",         "tier": "emulator",    "status": "built", "ci": "required", "role": "Snowflake account, adjacent to the family"},
+
+    {"name": "azure-emulators",            "tier": "composition", "status": "built", "ci": "required", "role": "The BOM, the family compose, the chain test"},
+    {"name": "emulators",                  "tier": "hub",         "status": "built", "ci": "required", "role": "This repo: the ecosystem directory and docs site"},
+
+    {"name": "contoso-sources",            "tier": "sources",     "status": "built", "ci": "missing",  "role": "The four vendor systems, shared by every platform"},
+    {"name": "contoso-data-product",       "tier": "core",        "status": "built", "ci": "required", "role": "Transforms, contracts, expected numbers"},
+
+    {"name": "contoso-data-product-fabric-airflow3",            "tier": "leaf", "engine": "fabric",     "orchestrator": "airflow3",           "status": "built",    "ci": "required"},
+    {"name": "contoso-data-product-fabric-notebook-pipelines",  "tier": "leaf", "engine": "fabric",     "orchestrator": "notebook-pipelines", "status": "built",    "ci": "required"},
+    {"name": "contoso-data-product-fabric-airflow-builtin",     "tier": "leaf", "engine": "fabric",     "orchestrator": "airflow-builtin",    "status": "built",    "ci": "missing"},
+    {"name": "contoso-data-product-databricks-jobs",            "tier": "leaf", "engine": "databricks", "orchestrator": "jobs",               "status": "built",    "ci": "required"},
+    {"name": "contoso-data-product-databricks-airflow3",        "tier": "leaf", "engine": "databricks", "orchestrator": "airflow3",           "status": "built",    "ci": "required"},
+    {"name": "contoso-data-product-snowflake-tasks",            "tier": "leaf", "engine": "snowflake",  "orchestrator": "tasks",              "status": "reserved", "ci": "none"},
+    {"name": "contoso-data-product-snowflake-airflow3",         "tier": "leaf", "engine": "snowflake",  "orchestrator": "airflow3",           "status": "reserved", "ci": "none"},
+
+    {"name": "fabric-platform-airflow3",            "tier": "platform", "engine": "fabric",     "orchestrator": "airflow3",           "status": "built",    "ci": "required"},
+    {"name": "fabric-platform-notebook-pipelines",  "tier": "platform", "engine": "fabric",     "orchestrator": "notebook-pipelines", "status": "built",    "ci": "required"},
+    {"name": "fabric-platform-airflow-builtin",     "tier": "platform", "engine": "fabric",     "orchestrator": "airflow-builtin",    "status": "built",    "ci": "missing"},
+    {"name": "databricks-platform-jobs",            "tier": "platform", "engine": "databricks", "orchestrator": "jobs",               "status": "built",    "ci": "required"},
+    {"name": "databricks-platform-airflow3",        "tier": "platform", "engine": "databricks", "orchestrator": "airflow3",           "status": "built",    "ci": "missing"},
+    {"name": "snowflake-platform-tasks",            "tier": "platform", "engine": "snowflake",  "orchestrator": "tasks",              "status": "built",    "ci": "required"},
+    {"name": "snowflake-platform-airflow3",         "tier": "platform", "engine": "snowflake",  "orchestrator": "airflow3",           "status": "reserved", "ci": "none"}
+  ]
+}

@@ -107,6 +107,8 @@ function writeIndex() {
 ` +
       `- [Getting started](06-getting-started.md): three doors in
 ` +
+      `- [CI status](08-ci-status.md): is the whole ecosystem green
+` +
       `- [Roadmap](07-roadmap.md): what earns a new emulator its place
 `,
   );

@@ -45,7 +45,11 @@ export default defineConfig({
         },
         {
           label: 'Using it',
-          items: [{ slug: '06-getting-started' }, { slug: '07-roadmap' }],
+          items: [
+            { slug: '06-getting-started' },
+            { slug: '08-ci-status' },
+            { slug: '07-roadmap' },
+          ],
         },
         {
           label: 'Repos',

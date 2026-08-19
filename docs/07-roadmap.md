@@ -47,16 +47,17 @@ one, and it would change what the word "family" means in the parity report.
 
 ## Open directions
 
-**Filling the matrix.** Seven of the fourteen repos in the matrix are built:
-three leaf products and four platforms. The reserved ones exist so the shape is
-visible before every cell is filled.
+**Filling the matrix.** Eleven of the fourteen repos in the matrix carry code:
+five leaf products and six platforms. Three remain reserved, all of them on the
+Snowflake row, and the only cell with neither half built is Snowflake with
+Airflow 3.
 
-The most useful next step is a **pairing**, not a repo. Three cells hold
-exactly one built half: the Databricks Airflow 3 leaf exists with no platform
-to mount it, and the Snowflake Tasks and Fabric notebook-pipelines platforms
-exist with their leaf cells still reserved. Completing a pair is what turns a
-cell into a runnable comparison, which is the only thing the matrix is for. See
-[the matrix](03-the-data-product-matrix.md).
+The gap that matters more than the empty cells is **verification**. Three of
+the eleven built repos have no CI at all, so the Fabric built-in Airflow pair
+and `databricks-platform-airflow3` exist as code nothing checks. Wiring CI to
+them is worth more than starting a twelfth repo, because an unverified cell
+cannot settle the comparison the matrix exists to make. See
+[CI status](08-ci-status.md) and [the matrix](03-the-data-product-matrix.md).
 
 **Extracting the flagship's product.** `fabric-platform-notebook-pipelines`
 predates the platform/product split and carries its product inline, which is

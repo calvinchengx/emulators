@@ -1,0 +1,77 @@
+name: Family CI status
+
+# Polls every member's Actions state and fails when something is red, so
+# GitHub's own failure notifications do the alerting. There is no bespoke
+# notifier to build or keep working.
+#
+# A pull model on one schedule beats pushing from 25 repos: one workflow to
+# maintain instead of 25 kept in sync, and 30-minute freshness is well inside
+# what a human acts on.
+on:
+  schedule:
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'members.json'
+      - 'scripts/family_ci.py'
+      - '.github/workflows/family-ci.yml'
+
+permissions:
+  contents: read
+
+# Never let two sweeps overlap, and drop the older one: a stale sweep has
+# nothing to say that the newer one does not.
+concurrency:
+  group: family-ci
+  cancel-in-progress: true
+
+jobs:
+  sweep:
+    name: Sweep every member
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      # FAMILY_CI_TOKEN is optional. Without it the default token still reads
+      # every public repo's runs over REST, and only the head-commit rollup
+      # column is lost. A fine-grained PAT with actions:read + metadata:read
+      # restores it.
+      # The matrix tables in README.md and /docs are generated from
+      # members.json. A hand edit to either that does not match the registry
+      # fails here, which is the guard that hand-maintenance did not have.
+      - name: Committed tables match the registry
+        run: ./scripts/render_tables.py --check
+
+      - name: Self-test the gate before trusting it
+        env:
+          GH_TOKEN: ${{ secrets.FAMILY_CI_TOKEN || github.token }}
+        run: ./scripts/family_ci.py --self-test
+
+      - name: Sweep
+        id: sweep
+        env:
+          GH_TOKEN: ${{ secrets.FAMILY_CI_TOKEN || github.token }}
+        run: |
+          set -o pipefail
+          ./scripts/family_ci.py --json --no-rollup-required > ci-status.json
+          ./scripts/family_ci.py --no-rollup-required | tee summary.md
+          {
+            echo '### Family CI'
+            echo
+            cat summary.md
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v5
+        with:
+          name: ci-status
+          path: |
+            ci-status.json
+            summary.md
+
+      # Last, so the report is always published even when it is bad news.
+      - name: Fail if any member is red or misdeclared
+        env:
+          GH_TOKEN: ${{ secrets.FAMILY_CI_TOKEN || github.token }}
+        run: ./scripts/family_ci.py --red-only --fail-on-red --no-rollup-required
