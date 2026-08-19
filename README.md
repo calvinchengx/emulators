@@ -81,7 +81,7 @@ graph TB
 | [azure-apim-emulator](https://github.com/calvinchengx/azure-apim-emulator) | API Management | Management plane, gateway, policies | [site](https://calvinchengx.github.io/azure-apim-emulator/) |
 | [fabric-emulator](https://github.com/calvinchengx/fabric-emulator) | Microsoft Fabric | Control plane + OneLake, with a real Spark engine behind it | [site](https://calvinchengx.github.io/fabric-emulator/) |
 | [databricks-emulator](https://github.com/calvinchengx/databricks-emulator) | Azure Databricks | Workspace REST; PAT + OIDC identity, entra as optional federated issuer | [site](https://calvinchengx.github.io/databricks-emulator/) |
-| [snowflake-emulator](https://github.com/calvinchengx/snowflake-emulator) | Snowflake | Account emulator on DuckDB. **Adjacent**: same discipline, not an Azure service, not in the BOM | [repo](https://github.com/calvinchengx/snowflake-emulator) |
+| [snowflake-emulator](https://github.com/calvinchengx/snowflake-emulator) | Snowflake | Account emulator on DuckDB. **Adjacent**: same discipline, not an Azure service, not in the BOM | [site](https://calvinchengx.github.io/snowflake-emulator/) |
 
 Composed by [azure-emulators](https://github.com/calvinchengx/azure-emulators):
 the bill of materials, the certified `docker compose`, and the chain test that

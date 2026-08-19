@@ -55,7 +55,7 @@ own image and its own quickstart, and the single-service cases are real:
 | APIM policies and the gateway | [azure-apim-emulator](https://calvinchengx.github.io/azure-apim-emulator/) |
 | Fabric workspaces, items, OneLake | [fabric-emulator](https://calvinchengx.github.io/fabric-emulator/) |
 | Databricks jobs and workspace REST | [databricks-emulator](https://calvinchengx.github.io/databricks-emulator/) |
-| Snowflake SQL and account objects | [snowflake-emulator](https://github.com/calvinchengx/snowflake-emulator), outside the Azure BOM, so it runs standalone rather than through Door 1 |
+| Snowflake SQL and account objects | [snowflake-emulator](https://calvinchengx.github.io/snowflake-emulator/), outside the Azure BOM, so it runs standalone rather than through Door 1 |
 
 entra-emulator is the highest-value one to adopt first, because identity is
 usually the first thing that blocks local development.

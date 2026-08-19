@@ -61,7 +61,7 @@ export default defineConfig({
             { label: 'azure-apim-emulator', link: 'https://calvinchengx.github.io/azure-apim-emulator/', attrs: { target: '_blank' } },
             { label: 'fabric-emulator', link: 'https://calvinchengx.github.io/fabric-emulator/', attrs: { target: '_blank' } },
             { label: 'databricks-emulator', link: 'https://calvinchengx.github.io/databricks-emulator/', attrs: { target: '_blank' } },
-            { label: 'snowflake-emulator', link: 'https://github.com/calvinchengx/snowflake-emulator', attrs: { target: '_blank' } },
+            { label: 'snowflake-emulator', link: 'https://calvinchengx.github.io/snowflake-emulator/', attrs: { target: '_blank' } },
           ],
         },
       ],

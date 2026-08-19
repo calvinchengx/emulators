@@ -131,7 +131,8 @@ and federated Entra tokens. Whether snowflake should join the family is a
 release-coordination question: it would have to enter the compose and the chain
 test.
 
-[Repo](https://github.com/calvinchengx/snowflake-emulator)
+[Docs](https://calvinchengx.github.io/snowflake-emulator/) ·
+[repo](https://github.com/calvinchengx/snowflake-emulator)
 
 ## Using one on its own
 
