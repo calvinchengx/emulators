@@ -44,7 +44,7 @@
     {"name": "contoso-data-product-databricks-jobs",            "tier": "leaf", "engine": "databricks", "orchestrator": "jobs",               "status": "built",    "ci": "required"},
     {"name": "contoso-data-product-databricks-airflow3",        "tier": "leaf", "engine": "databricks", "orchestrator": "airflow3",           "status": "built",    "ci": "required"},
     {"name": "contoso-data-product-snowflake-tasks",            "tier": "leaf", "engine": "snowflake",  "orchestrator": "tasks",              "status": "built",    "ci": "required"},
-    {"name": "contoso-data-product-snowflake-airflow3",         "tier": "leaf", "engine": "snowflake",  "orchestrator": "airflow3",           "status": "reserved", "ci": "none"},
+    {"name": "contoso-data-product-snowflake-airflow3",         "tier": "leaf", "engine": "snowflake",  "orchestrator": "airflow3",           "status": "built",    "ci": "required"},
 
     {"name": "fabric-platform-airflow3",            "tier": "platform", "engine": "fabric",     "orchestrator": "airflow3",           "status": "built",    "ci": "required"},
     {"name": "fabric-platform-notebook-pipelines",  "tier": "platform", "engine": "fabric",     "orchestrator": "notebook-pipelines", "status": "built",    "ci": "required", "conditional": ["attribute.yml"]},
@@ -52,6 +52,6 @@
     {"name": "databricks-platform-jobs",            "tier": "platform", "engine": "databricks", "orchestrator": "jobs",               "status": "built",    "ci": "required"},
     {"name": "databricks-platform-airflow3",        "tier": "platform", "engine": "databricks", "orchestrator": "airflow3",           "status": "built",    "ci": "required"},
     {"name": "snowflake-platform-tasks",            "tier": "platform", "engine": "snowflake",  "orchestrator": "tasks",              "status": "built",    "ci": "required"},
-    {"name": "snowflake-platform-airflow3",         "tier": "platform", "engine": "snowflake",  "orchestrator": "airflow3",           "status": "reserved", "ci": "none"}
+    {"name": "snowflake-platform-airflow3",         "tier": "platform", "engine": "snowflake",  "orchestrator": "airflow3",           "status": "built",    "ci": "required"}
   ]
 }
