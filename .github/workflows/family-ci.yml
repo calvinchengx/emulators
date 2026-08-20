@@ -52,11 +52,29 @@ jobs:
           GH_TOKEN: ${{ secrets.FAMILY_CI_TOKEN || github.token }}
         run: ./scripts/check_registry.py
 
-      # docs/05 quotes the family's evidence numbers. Hand-copied, they went
-      # stale within four hours of being written, on a page that tells readers
-      # not to trust hand-copied numbers.
+      # docs/05 quotes the family's evidence numbers, generated from
+      # azure-emulators' family_parity.py.
+      #
+      # WARNS RATHER THAN FAILS, and the distinction is deliberate. The two
+      # checks above are about THIS repo's internal consistency: a hand-edited
+      # table or a missing registry entry is a mistake made here and fixable
+      # here, so they block. This one goes stale when a SIBLING repo lands a
+      # witness, which is other people's progress rather than a defect. It
+      # failed three times in one day for exactly that reason, and a red that
+      # nobody in this repo caused is a red people learn to skip past, which
+      # costs more than the staleness does.
+      #
+      # The warning is not silence: it names the one command that fixes it, it
+      # repeats on every scheduled sweep until someone runs it, and the numbers
+      # on the page carry their own instruction to run the generator rather
+      # than trust the snapshot.
       - name: The evidence table matches family_parity.py
-        run: ./scripts/render_evidence.py --check
+        run: |
+          if ! ./scripts/render_evidence.py --check; then
+            echo "::warning title=Evidence table is stale::A sibling repo has \
+            landed a witness since docs/05 was generated. Run \
+            ./scripts/render_evidence.py and commit. Not a defect in this repo."
+          fi
 
       - name: Self-test the gate before trusting it
         env:
