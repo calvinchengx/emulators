@@ -202,15 +202,32 @@ def classify(member, roll, wfs, stale_days, now, others_red=False, tip_sha=None)
             via = f", last ran on {w['sha']} via {w['event']}" if stale else ""
             return f"{w['file']}={w['conclusion']}{via}"
         note = ", ".join(label(w) for w in reds)
-        # This repo's sweep FAILS BY DESIGN when a member is red, so its own
-        # row would otherwise report the ecosystem's breakage a second time as
-        # though the hub were broken too. Say which it is, but only when
-        # another member is actually red: if nothing else is failing and the
-        # reporter still fails, that IS a defect here (a gate, or the script)
-        # and must not be explained away.
+        # THE REPORTER CANNOT REPORT ON ITSELF, and reading its own last run as
+        # evidence made this sweep unable to recover.
+        #
+        # It fails by design when a member is red, so its own row repeated the
+        # ecosystem's breakage as though the hub were broken too. The first fix
+        # explained that away only while ANOTHER member was red, reasoning that
+        # a reporter failing alone must be a real defect in the gate.
+        #
+        # That reasoning has a deadlock in it. Run N fails because member X is
+        # red. X is fixed. Run N+1 now sees nothing else red, and the reporter's
+        # last conclusion is still N's failure, so it reports a defect and fails.
+        # Run N+2 sees N+1's failure. The sweep stays red forever, having been
+        # red once, and a health check that cannot go green is one people stop
+        # reading. Observed: three consecutive scheduled runs failing with every
+        # other member green.
+        #
+        # So the reporter's own previous conclusion is dropped from its row. It
+        # is not evidence about the present: THIS run supersedes it, and the
+        # verdict is this run's exit code, which Actions already shows. Nothing
+        # is lost, because a gate that is genuinely broken fails right here and
+        # says so in its own status rather than in a row it wrote about itself.
         reporter = member.get("reporter")
-        if reporter and others_red and [w["file"] for w in reds] == [reporter]:
-            return BAD, f"{note} (mirrors the rows below, not a defect here)"
+        if reporter and [w["file"] for w in reds] == [reporter]:
+            if others_red:
+                return BAD, f"{note} (mirrors the rows below, not a defect here)"
+            return OK, ""
         return BAD, note
     if neutrals:
         return MEH, ", ".join(f"{w['file']}={w['conclusion']}" for w in neutrals)
@@ -335,6 +352,50 @@ def self_test(owner):
     return 1
 
 
+def self_test_reporter(now=None):
+    """The reporter must recover, and must not go blind doing it.
+
+    Dropping the reporter's own last conclusion from its own row is what lets
+    this sweep return to green after a member is fixed. Done carelessly it also
+    stops the hub reporting ANY failure of its own, so the four cases that
+    surround the one exception are asserted here, not just the exception.
+    """
+    import datetime
+
+    now = now or datetime.datetime.now(datetime.timezone.utc)
+    at = now.isoformat().replace("+00:00", "Z")
+
+    def wf(file, conclusion):
+        return {"file": file, "conclusion": conclusion, "sha": "abc",
+                "event": "schedule", "at": at}
+
+    hub = {"name": "emulators", "tier": "hub", "ci": "required",
+           "reporter": "family-ci.yml"}
+    leaf = {"name": "a-leaf", "tier": "leaf", "ci": "required"}
+    cases = [
+        ("reporter red alone recovers", hub, [wf("family-ci.yml", "failure")], False, OK),
+        ("reporter red beside a red member still reports", hub,
+         [wf("family-ci.yml", "failure")], True, BAD),
+        ("an ordinary red member still fails the gate", leaf,
+         [wf("ci.yml", "failure")], False, BAD),
+        ("the hub's OWN other workflow still fails the gate", hub,
+         [wf("docs.yml", "failure")], False, BAD),
+        ("reporter plus another of the hub's own still fails", hub,
+         [wf("family-ci.yml", "failure"), wf("docs.yml", "failure")], False, BAD),
+    ]
+    wrong = 0
+    for name, member, wfs, others_red, want in cases:
+        got, _ = classify(member, None, wfs, 7, now, others_red=others_red, tip_sha="abc")
+        if got != want:
+            print(f"self-test: {name}: got {got}, want {want}", file=sys.stderr)
+            wrong += 1
+    if wrong:
+        return 1
+    print(f"self-test: the reporter recovers, and still reports {len(cases) - 1} "
+          f"other failures")
+    return 0
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("member", nargs="?", help="one member, in detail")
@@ -350,7 +411,7 @@ def main():
 
     owner, members = load_registry()
     if a.self_test:
-        return self_test(owner)
+        return self_test(owner) or self_test_reporter()
 
     if a.member:
         known = [m["name"] for m in members]
