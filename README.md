@@ -108,7 +108,7 @@ One product, every engine × orchestrator cell. Leaves are
 | Databricks | Databricks Jobs | ✅ [leaf](https://github.com/calvinchengx/contoso-data-product-databricks-jobs) | ✅ [platform](https://github.com/calvinchengx/databricks-platform-jobs) |
 | Databricks | Airflow 3 | ✅ [leaf](https://github.com/calvinchengx/contoso-data-product-databricks-airflow3) | ✅ [platform](https://github.com/calvinchengx/databricks-platform-airflow3) |
 | Snowflake | Snowflake Tasks | ✅ [leaf](https://github.com/calvinchengx/contoso-data-product-snowflake-tasks) | ✅ [platform](https://github.com/calvinchengx/snowflake-platform-tasks) |
-| Snowflake | Airflow 3 | ⬜ [leaf](https://github.com/calvinchengx/contoso-data-product-snowflake-airflow3) | ⬜ [platform](https://github.com/calvinchengx/snowflake-platform-airflow3) |
+| Snowflake | Airflow 3 | ✅ [leaf](https://github.com/calvinchengx/contoso-data-product-snowflake-airflow3) | ✅ [platform](https://github.com/calvinchengx/snowflake-platform-airflow3) |
 
 ✅ built · ⬜ reserved, holding a README and a LICENSE
 
