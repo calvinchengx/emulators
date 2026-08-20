@@ -100,10 +100,12 @@ matrix is visible before every cell is filled: a reader can see what has been
 deliberately left undone, rather than guessing whether an absent cell is
 planned or impossible.
 
-One row is worth reading carefully. **Snowflake Tasks has a built platform and
-a reserved leaf**, so the platform currently runs a gold-only slice rather than
-a leaf product of its own. Completing that pair is what would turn the Snowflake
-column into a like-for-like comparison with the other two engines.
+**Snowflake Tasks completed its pair.** It had a built platform against a
+reserved leaf, so the platform ran a gold-only slice rather than a product of
+its own; the leaf now carries the steps and its own CI. That makes the Snowflake
+column a like-for-like comparison with the other two engines rather than a
+partial one, and leaves **Snowflake with Airflow 3 as the only cell with neither
+half built**.
 
 Statuses here are derived from what is on `main`, not from what a repository's
 README says about itself. Several of those READMEs still describe themselves as

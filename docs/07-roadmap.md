@@ -47,22 +47,22 @@ one, and it would change what the word "family" means in the parity report.
 
 ## Open directions
 
-**Filling the matrix.** Eleven of the fourteen repos in the matrix carry code:
-five leaf products and six platforms. Three remain reserved, all of them on the
-Snowflake row, and the only cell with neither half built is Snowflake with
-Airflow 3.
+**Filling the matrix.** Twelve of the fourteen repos carry code, six leaf
+products and six platforms, and **every cell is now either complete or empty**:
+no cell has one half built and the other reserved. The two that remain are the
+Snowflake Airflow 3 pair, which is the last unstarted cell.
 
-The gap that matters more than the empty cells is **verification**. Three of
-the eleven built repos have no CI at all, so the Fabric built-in Airflow pair
-and `databricks-platform-airflow3` exist as code nothing checks. Wiring CI to
-them is worth more than starting a twelfth repo, because an unverified cell
-cannot settle the comparison the matrix exists to make. See
-[CI status](08-ci-status.md) and [the matrix](03-the-data-product-matrix.md).
+The verification gap that used to sit alongside this is closed. Every built
+repo in the ecosystem now has CI, secret scanning and vulnerability scanning,
+and the registry has no member declared as missing CI, so an unverified cell
+can no longer quietly fail to settle the comparison the matrix exists to make.
+See [CI status](08-ci-status.md) and [the matrix](03-the-data-product-matrix.md).
 
 **Extracting the flagship's product.** `fabric-platform-notebook-pipelines`
 predates the platform/product split and carries its product inline, which is
-why its leaf cell is still reserved. Splitting it would make the fullest
-end-to-end demonstration in the ecosystem also the clearest illustration of the
+why it is the one platform that does not take `PRODUCT=`. Its leaf cell is now
+built separately, so splitting the platform would make the fullest end-to-end
+demonstration in the ecosystem also the clearest illustration of the
 separation.
 
 **Differential evidence against real Azure.** The strongest caveat on every
