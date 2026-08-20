@@ -132,7 +132,7 @@ vendor is where a comparison dies.
 | Fabric | Built-in Airflow | ✅ [contoso-data-product-fabric-airflow-builtin](https://github.com/calvinchengx/contoso-data-product-fabric-airflow-builtin) | ✅ [fabric-platform-airflow-builtin](https://github.com/calvinchengx/fabric-platform-airflow-builtin) |
 | Databricks | Databricks Jobs | ✅ [contoso-data-product-databricks-jobs](https://github.com/calvinchengx/contoso-data-product-databricks-jobs) | ✅ [databricks-platform-jobs](https://github.com/calvinchengx/databricks-platform-jobs) |
 | Databricks | Airflow 3 | ✅ [contoso-data-product-databricks-airflow3](https://github.com/calvinchengx/contoso-data-product-databricks-airflow3) | ✅ [databricks-platform-airflow3](https://github.com/calvinchengx/databricks-platform-airflow3) |
-| Snowflake | Snowflake Tasks | ⬜ [contoso-data-product-snowflake-tasks](https://github.com/calvinchengx/contoso-data-product-snowflake-tasks) | ✅ [snowflake-platform-tasks](https://github.com/calvinchengx/snowflake-platform-tasks) |
+| Snowflake | Snowflake Tasks | ✅ [contoso-data-product-snowflake-tasks](https://github.com/calvinchengx/contoso-data-product-snowflake-tasks) | ✅ [snowflake-platform-tasks](https://github.com/calvinchengx/snowflake-platform-tasks) |
 | Snowflake | Airflow 3 | ⬜ [contoso-data-product-snowflake-airflow3](https://github.com/calvinchengx/contoso-data-product-snowflake-airflow3) | ⬜ [snowflake-platform-airflow3](https://github.com/calvinchengx/snowflake-platform-airflow3) |
 
 ✅ built · ⬜ reserved, holding a README and a LICENSE

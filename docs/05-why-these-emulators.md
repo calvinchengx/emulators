@@ -116,7 +116,7 @@ something that is **not us**:
 
 | emulator | green claims | ci: external | sdk: only | own tests only | independently evidenced |
 |---|---:|---:|---:|---:|---:|
-| fabric | 113 | 106 | 0 | 7 | **106/113 (94%)** |
+| fabric | 113 | 107 | 0 | 6 | **107/113 (95%)** |
 | entra | 55 | 52 | 0 | 3 | **52/55 (95%)** |
 | keyvault | 49 | 38 | 9 | 2 | **47/49 (96%)** |
 | apim | 35 | 27 | 3 | 5 | **30/35 (86%)** |
