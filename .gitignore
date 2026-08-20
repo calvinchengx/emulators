@@ -1,2 +1,10 @@
 node_modules/
 .DS_Store
+
+# Python bytecode
+__pycache__/
+*.pyc
+
+# Session worktrees. Another session's checkout can appear inside this repo,
+# and `git add -A` will otherwise commit it as an embedded git repository.
+.claude/worktrees/
