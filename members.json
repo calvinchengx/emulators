@@ -14,7 +14,13 @@
     "          none      nothing to verify yet, correct for a reserved repo",
     "",
     "'missing' is the entry that earns this file. Without a declared expectation,",
-    "a repo with no CI and a repo whose CI was deleted print the same blank row."
+    "a repo with no CI and a repo whose CI was deleted print the same blank row.",
+    "",
+    "  conditional  workflows that run only when a precondition holds, so a",
+    "               `skipped` result is their healthy state. attribute.yml",
+    "               bisects a failed acceptance run: it is inert exactly when",
+    "               the repo is well, and counting that as a problem trains the",
+    "               reader to ignore the colour."
   ],
   "owner": "calvinchengx",
   "members": [
@@ -41,7 +47,7 @@
     {"name": "contoso-data-product-snowflake-airflow3",         "tier": "leaf", "engine": "snowflake",  "orchestrator": "airflow3",           "status": "reserved", "ci": "none"},
 
     {"name": "fabric-platform-airflow3",            "tier": "platform", "engine": "fabric",     "orchestrator": "airflow3",           "status": "built",    "ci": "required"},
-    {"name": "fabric-platform-notebook-pipelines",  "tier": "platform", "engine": "fabric",     "orchestrator": "notebook-pipelines", "status": "built",    "ci": "required"},
+    {"name": "fabric-platform-notebook-pipelines",  "tier": "platform", "engine": "fabric",     "orchestrator": "notebook-pipelines", "status": "built",    "ci": "required", "conditional": ["attribute.yml"]},
     {"name": "fabric-platform-airflow-builtin",     "tier": "platform", "engine": "fabric",     "orchestrator": "airflow-builtin",    "status": "built",    "ci": "required"},
     {"name": "databricks-platform-jobs",            "tier": "platform", "engine": "databricks", "orchestrator": "jobs",               "status": "built",    "ci": "required"},
     {"name": "databricks-platform-airflow3",        "tier": "platform", "engine": "databricks", "orchestrator": "airflow3",           "status": "built",    "ci": "required"},

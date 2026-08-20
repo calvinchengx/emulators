@@ -66,6 +66,34 @@ them into pass or fail would be a fabrication:
 `flutter-e2e.yml` is cancelled, green the four days before. Calling that green
 hides a gap; calling it red invents a failure.
 
+## Two ways a verdict can mislead, and what the sweep does about them
+
+**A workflow that is meant to skip.** `attribute.yml` in
+`fabric-platform-notebook-pipelines` bisects a *failed* acceptance run, so it is
+inert exactly when the repo is healthy. Reported as a plain `skipped` it painted
+a well repo amber, which is worse than useless: it teaches the reader to
+discount the colour. The registry now declares such workflows `conditional`, and
+a declared skip is healthy. A declared workflow that genuinely **fails** is
+still red, which is the property the change had to preserve.
+
+**A workflow that has not been asked recently.** `acceptance.yml` runs on a
+daily schedule and on a release dispatch, never on push. So after a fix merges
+it keeps reporting the old verdict until the next scheduled run, and for up to a
+day "this is broken" and "nobody has asked it since the fix" look identical.
+That is not a reporting bug and the fix is not to hide the failure: the newest
+answer is the only honest one. Instead a stale verdict now names the commit it
+was proved on and what fired it, so the row reads
+
+    acceptance.yml=failure, last ran on d67ceef via schedule
+
+and a reader can see the verdict predates the tip. This exact case cost real
+time: the repo had already been fixed and was still being reported as red.
+
+The general shape is worth stating, because both of these were found the same
+way. **A signal that is wrong in the safe direction still costs you**, because
+people learn to discount it, and then it is worth nothing in the direction that
+matters.
+
 ## The registry
 
 [`members.json`](https://github.com/calvinchengx/emulators/blob/main/members.json)

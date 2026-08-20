@@ -146,6 +146,11 @@ def workflows(owner, name):
             "conclusion": r["conclusion"],
             "at": r["updated_at"],
             "url": r["html_url"],
+            # What fired it, and which commit it proved. A schedule-driven
+            # workflow lags main by design, so "red" and "has not re-run since
+            # the fix" look identical without these two.
+            "event": r.get("event"),
+            "sha": (r.get("head_sha") or "")[:7],
         }
         for r in sorted(best.values(), key=lambda r: r["path"])
     ]
@@ -158,9 +163,17 @@ def age_days(iso, now):
     return (now - t).total_seconds() / 86400
 
 
-def classify(member, roll, wfs, stale_days, now, others_red=False):
+def classify(member, roll, wfs, stale_days, now, others_red=False, tip_sha=None):
     """One verdict per member. Every branch is a state a reader can act on."""
     expect = member["ci"]
+    # Workflows the registry declares conditional run only when a precondition
+    # holds, so `skipped` is their healthy state rather than a gap. attribute.yml
+    # is the worked example: it bisects a failed acceptance run, so it is inert
+    # exactly when the repo is well. Counting that as "needs a look" made a
+    # healthy repo read amber and trained the reader to ignore the colour.
+    conditional = set(member.get("conditional") or [])
+    wfs = [w for w in wfs
+           if not (w["file"] in conditional and w["conclusion"] == "skipped")]
     reds = [w for w in wfs if w["conclusion"] == "failure" or w["conclusion"] == "timed_out"]
     neutrals = [w for w in wfs if w["conclusion"] in NEUTRAL]
     ages = [a for a in (age_days(w["at"], now) for w in wfs) if a is not None]
@@ -178,7 +191,17 @@ def classify(member, roll, wfs, stale_days, now, others_red=False):
         return (ERROR if wfs else OK), (
             "reserved but has CI, registry stale" if wfs else "reserved, nothing to verify")
     if reds:
-        note = ", ".join(f"{w['file']}={w['conclusion']}" for w in reds)
+        def label(w):
+            # A schedule-driven or dispatch-driven workflow does not run on
+            # push, so its verdict can predate the commit that fixed it. Saying
+            # so is the difference between "this is broken" and "nobody has
+            # asked it since". The sweep still reports the failure, because the
+            # newest ANSWER is the only honest one; it just stops the reader
+            # concluding the tip is broken when the tip was never tested.
+            stale = tip_sha and w.get("sha") and not tip_sha.startswith(w["sha"])
+            via = f", last ran on {w['sha']} via {w['event']}" if stale else ""
+            return f"{w['file']}={w['conclusion']}{via}"
+        note = ", ".join(label(w) for w in reds)
         # This repo's sweep FAILS BY DESIGN when a member is red, so its own
         # row would otherwise report the ecosystem's breakage a second time as
         # though the hub were broken too. Say which it is, but only when
@@ -227,8 +250,10 @@ def collect(owner, members, stale_days, require_rollup=True):
         for m, _ in gathered}
     rows = []
     for m, wfs in gathered:
-        verdict, note = classify(m, roll.get(m["name"], {}), wfs, stale_days, now,
-                                 others_red=others_red[m["name"]])
+        r0 = roll.get(m["name"], {})
+        verdict, note = classify(m, r0, wfs, stale_days, now,
+                                 others_red=others_red[m["name"]],
+                                 tip_sha=r0.get("sha"))
         r = roll.get(m["name"], {})
         rows.append({
             "name": m["name"], "tier": m["tier"], "ci": m["ci"],
