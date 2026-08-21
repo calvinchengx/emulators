@@ -34,6 +34,14 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      # uv is not on the runner by default, and the ontology gate below runs
+      # under it. Without this the gate does not fail: the step errors with
+      # `uv: command not found`, which is a red for the wrong reason and
+      # teaches nobody anything about the registry.
+      - uses: astral-sh/setup-uv@ae62891fec2bb8e7d6c99fc78c9fec3a63790f8d
+        with:
+          version: "0.12.3"
+
       # FAMILY_CI_TOKEN is optional. Without it the default token still reads
       # every public repo's runs over REST, and only the head-commit rollup
       # column is lost. A fine-grained PAT with actions:read + metadata:read
@@ -43,6 +51,28 @@ jobs:
       # fails here, which is the guard that hand-maintenance did not have.
       - name: Committed tables match the registry
         run: ./scripts/render_tables.py --check
+
+      # The ontology in docs/09: closed value sets, the shape rules for each
+      # tier, and pairs_with DERIVED from (engine, orchestrator) so an
+      # unpaired cell is an error rather than a silence. Runs its own
+      # self-test first, because a gate nobody has watched fail is a gate
+      # nobody knows the direction of.
+      - name: The ontology holds
+        run: |
+          uv run --no-project --with jsonschema ./scripts/check_ontology.py --self-test
+          uv run --no-project --with jsonschema ./scripts/check_ontology.py
+
+      # `bom` is the one field this repository cannot derive: what the BOM
+      # certifies is azure-emulators' fact, not ours. Separated from the
+      # structural check so a GitHub outage does not fail the shape rules.
+      - name: BOM membership matches what azure-emulators stands up
+        run: uv run --no-project --with jsonschema ./scripts/check_ontology.py --bom
+
+      # The map in README.md is generated from the same registry as the
+      # tables. It was the last hand-drawn artefact here, and it showed seven
+      # leaves as one node.
+      - name: The committed map matches the registry
+        run: ./scripts/render_map.py --check
 
       # A registry can be accurate and still incomplete, and this repo cannot
       # detect that by looking at itself: a member nobody added is simply

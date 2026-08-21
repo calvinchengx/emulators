@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1040" height="712" viewBox="0 0 1040 712" role="img" aria-labelledby="title desc">
+  <title id="title">The emulator family: 25 repositories</title>
+  <desc id="desc">One data product definition and one set of vendor systems feed 7 cells. Each cell is a leaf paired with a platform, grouped under the engine emulator it targets. Four cross-cutting emulators run in every stack.</desc>
+  <rect x="28" y="28" width="482" height="54" rx="6" fill="#26215C" stroke="#7F77DD" stroke-width="1"/>
+  <text x="44" y="51" fill="#CECBF6" font-size="14" font-weight="500" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif">contoso-data-product</text>
+  <text x="44" y="69" fill="#CECBF6" font-size="12" font-weight="400" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif">transforms, contracts, expected numbers</text>
+  <rect x="530" y="28" width="482" height="54" rx="6" fill="#2C2C2A" stroke="#888780" stroke-width="1"/>
+  <text x="546" y="51" fill="#D3D1C7" font-size="14" font-weight="500" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif">contoso-sources</text>
+  <text x="546" y="69" fill="#D3D1C7" font-size="12" font-weight="400" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif">four vendor systems, materialised not committed</text>
+  <text x="28" y="108" fill="#9198a1" font-size="12" font-weight="400" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif">pins_by_tag ↓ every leaf</text>
+  <text x="530" y="108" fill="#9198a1" font-size="12" font-weight="400" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif">materialises_from ↓ every platform</text>
+  <text x="268" y="126" fill="#9198a1" font-size="12" font-weight="400" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif">orchestrator</text>
+  <text x="444" y="126" fill="#9198a1" font-size="12" font-weight="400" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif">platform repository</text>
+  <text x="998" y="126" fill="#9198a1" font-size="12" font-weight="400" text-anchor="end" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif">leaf, under contoso-data-product-</text>
+  <rect x="28" y="138" width="210" height="134" rx="6" fill="#4A1B0C" stroke="#D85A30" stroke-width="1"/>
+  <text x="44" y="164" fill="#F5C4B3" font-size="14" font-weight="500" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif">fabric-emulator</text>
+  <text x="44" y="182" fill="#F5C4B3" font-size="12" font-weight="400" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif">in the BOM</text>
+  <rect x="254" y="148" width="758" height="34" rx="5" fill="#04342C" stroke="#1D9E75" stroke-width="1"/>
+  <text x="268" y="170" fill="#9FE1CB" font-size="13" font-weight="500" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif">Built-in Airflow</text>
+  <text x="444" y="170" fill="#9FE1CB" font-size="12" font-weight="400" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif">fabric-platform-airflow-builtin</text>
+  <text x="998" y="170" fill="#9FE1CB" font-size="12" font-weight="400" text-anchor="end" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif">fabric-airflow-builtin</text>
+  <rect x="254" y="188" width="758" height="34" rx="5" fill="#04342C" stroke="#1D9E75" stroke-width="1"/>
+  <text x="268" y="210" fill="#9FE1CB" font-size="13" font-weight="500" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif">Airflow 3</text>
+  <text x="444" y="210" fill="#9FE1CB" font-size="12" font-weight="400" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif">fabric-platform-airflow3</text>
+  <text x="998" y="210" fill="#9FE1CB" font-size="12" font-weight="400" text-anchor="end" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif">fabric-airflow3</text>
+  <rect x="254" y="228" width="758" height="34" rx="5" fill="#04342C" stroke="#1D9E75" stroke-width="1"/>
+  <text x="268" y="250" fill="#9FE1CB" font-size="13" font-weight="500" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif">Notebooks + Pipelines</text>
+  <text x="444" y="250" fill="#9FE1CB" font-size="12" font-weight="400" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif">fabric-platform-notebook-pipelines</text>
+  <text x="998" y="250" fill="#9FE1CB" font-size="12" font-weight="400" text-anchor="end" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif">fabric-notebook-pipelines</text>
+  <rect x="28" y="288" width="210" height="94" rx="6" fill="#4A1B0C" stroke="#D85A30" stroke-width="1"/>
+  <text x="44" y="314" fill="#F5C4B3" font-size="14" font-weight="500" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif">databricks-emulator</text>
+  <text x="44" y="332" fill="#F5C4B3" font-size="12" font-weight="400" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif">in the BOM</text>
+  <rect x="254" y="298" width="758" height="34" rx="5" fill="#04342C" stroke="#1D9E75" stroke-width="1"/>
+  <text x="268" y="320" fill="#9FE1CB" font-size="13" font-weight="500" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif">Airflow 3</text>
+  <text x="444" y="320" fill="#9FE1CB" font-size="12" font-weight="400" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif">databricks-platform-airflow3</text>
+  <text x="998" y="320" fill="#9FE1CB" font-size="12" font-weight="400" text-anchor="end" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif">databricks-airflow3</text>
+  <rect x="254" y="338" width="758" height="34" rx="5" fill="#04342C" stroke="#1D9E75" stroke-width="1"/>
+  <text x="268" y="360" fill="#9FE1CB" font-size="13" font-weight="500" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif">Jobs</text>
+  <text x="444" y="360" fill="#9FE1CB" font-size="12" font-weight="400" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif">databricks-platform-jobs</text>
+  <text x="998" y="360" fill="#9FE1CB" font-size="12" font-weight="400" text-anchor="end" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif">databricks-jobs</text>
+  <rect x="28" y="398" width="210" height="94" rx="6" fill="#4A1B0C" stroke="#D85A30" stroke-width="1"/>
+  <text x="44" y="424" fill="#F5C4B3" font-size="14" font-weight="500" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif">snowflake-emulator</text>
+  <text x="44" y="442" fill="#F5C4B3" font-size="12" font-weight="400" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif">adjacent, not in the BOM</text>
+  <rect x="254" y="408" width="758" height="34" rx="5" fill="#04342C" stroke="#1D9E75" stroke-width="1"/>
+  <text x="268" y="430" fill="#9FE1CB" font-size="13" font-weight="500" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif">Airflow 3</text>
+  <text x="444" y="430" fill="#9FE1CB" font-size="12" font-weight="400" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif">snowflake-platform-airflow3</text>
+  <text x="998" y="430" fill="#9FE1CB" font-size="12" font-weight="400" text-anchor="end" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif">snowflake-airflow3</text>
+  <rect x="254" y="448" width="758" height="34" rx="5" fill="#04342C" stroke="#1D9E75" stroke-width="1"/>
+  <text x="268" y="470" fill="#9FE1CB" font-size="13" font-weight="500" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif">Tasks</text>
+  <text x="444" y="470" fill="#9FE1CB" font-size="12" font-weight="400" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif">snowflake-platform-tasks</text>
+  <text x="998" y="470" fill="#9FE1CB" font-size="12" font-weight="400" text-anchor="end" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif">snowflake-tasks</text>
+  <text x="28" y="518" fill="#9198a1" font-size="12" font-weight="400" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif">pairs_with → derived from (engine, orchestrator); targets → the emulator each group sits in</text>
+  <text x="28" y="542" fill="#9198a1" font-size="12" font-weight="400" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif">in every stack, whatever the engine</text>
+  <rect x="28" y="554" width="237" height="52" rx="6" fill="#4A1B0C" stroke="#D85A30" stroke-width="1"/>
+  <text x="42" y="576" fill="#F5C4B3" font-size="13" font-weight="500" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif">entra-emulator</text>
+  <text x="42" y="594" fill="#F5C4B3" font-size="12" font-weight="400" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif">identity</text>
+  <rect x="277" y="554" width="237" height="52" rx="6" fill="#4A1B0C" stroke="#D85A30" stroke-width="1"/>
+  <text x="291" y="576" fill="#F5C4B3" font-size="13" font-weight="500" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif">arm-emulator</text>
+  <text x="291" y="594" fill="#F5C4B3" font-size="12" font-weight="400" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif">control plane</text>
+  <rect x="526" y="554" width="237" height="52" rx="6" fill="#4A1B0C" stroke="#D85A30" stroke-width="1"/>
+  <text x="540" y="576" fill="#F5C4B3" font-size="13" font-weight="500" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif">azure-keyvault-emulator</text>
+  <text x="540" y="594" fill="#F5C4B3" font-size="12" font-weight="400" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif">secrets</text>
+  <rect x="775" y="554" width="237" height="52" rx="6" fill="#4A1B0C" stroke="#D85A30" stroke-width="1"/>
+  <text x="789" y="576" fill="#F5C4B3" font-size="13" font-weight="500" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif">azure-apim-emulator</text>
+  <text x="789" y="594" fill="#F5C4B3" font-size="12" font-weight="400" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif">gateway</text>
+  <rect x="28" y="632" width="482" height="52" rx="6" fill="#2C2C2A" stroke="#888780" stroke-width="1"/>
+  <text x="42" y="654" fill="#D3D1C7" font-size="13" font-weight="500" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif">azure-emulators</text>
+  <text x="42" y="672" fill="#D3D1C7" font-size="12" font-weight="400" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif">certifies six, pins them, runs the chain test</text>
+  <rect x="530" y="632" width="482" height="52" rx="6" fill="#2C2C2A" stroke="#888780" stroke-width="1"/>
+  <text x="544" y="654" fill="#D3D1C7" font-size="13" font-weight="500" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif">emulators</text>
+  <text x="544" y="672" fill="#D3D1C7" font-size="12" font-weight="400" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif">this directory, the docs site, the CI sweep</text>
+</svg>

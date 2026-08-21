@@ -59,12 +59,25 @@
             "required": ["tier"]
           },
           "then": { "required": ["engine", "orchestrator"] },
-          "else": {
+          "else": { "properties": { "orchestrator": false } }
+        },
+        {
+          "comment": "`engine` on an emulator is what `targets` joins on. Name-prefix matching would work today and is exactly the implicit convention the ontology exists to replace.",
+          "if": {
+            "properties": { "kind": { "const": "engine" } },
+            "required": ["kind"]
+          },
+          "then": { "required": ["engine"] }
+        },
+        {
+          "if": {
             "properties": {
-              "engine": false,
-              "orchestrator": false
-            }
-          }
+              "tier": { "const": "emulator" },
+              "kind": { "not": { "const": "engine" } }
+            },
+            "required": ["tier", "kind"]
+          },
+          "then": { "properties": { "engine": false } }
         }
       ]
     }

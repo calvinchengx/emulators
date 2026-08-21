@@ -23,6 +23,12 @@ import argparse
 import json
 import re
 import sys
+
+# IMPORTED AT THE TOP ON PURPOSE. A `try: import jsonschema / except: skip`
+# turns a missing dependency into a passing gate, which is the failure this
+# repository keeps finding in other people's code. Run it under
+# `uv run --with jsonschema`; if it is absent the gate dies rather than lies.
+import jsonschema
 import urllib.error
 import urllib.request
 from collections import Counter, defaultdict
@@ -30,6 +36,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 REGISTRY = ROOT / "members.json"
+SCHEMA = ROOT / "members.schema.json"
 
 # What the BOM actually stands up, read from where it is PUBLISHED rather than
 # from a checkout that may be sitting on a branch.
@@ -50,15 +57,40 @@ BOM_COMPOSE = "https://raw.githubusercontent.com/calvinchengx/azure-emulators/ma
 # volume name cannot be read as membership.
 BOM_IMAGE = re.compile(r"image:\s*ghcr\.io/calvinchengx/([a-z0-9-]+):")
 
-FIELDS_BY_TIER = {
-    "emulator": {"kind", "bom"},
-    "leaf": {"engine", "orchestrator"},
-    "platform": {"engine", "orchestrator"},
-}
+def fields_for(m):
+    """Which of the optional fields this member must carry, and only these.
+
+    `engine` on an emulator is the join `targets` runs on. It is declared
+    rather than matched off the name prefix: `fabric-emulator` happens to
+    start with `fabric` today, and a convention that works by coincidence is
+    the thing this ontology replaces. Found while writing the map generator,
+    which reached for `m["engine"]` on an emulator and got a KeyError.
+    """
+    tier, kind = m["tier"], m.get("kind")
+    if tier == "emulator":
+        return {"kind", "bom"} | ({"engine"} if kind == "engine" else set())
+    if tier in ("leaf", "platform"):
+        return {"engine", "orchestrator"}
+    return set()
 
 
 def load():
     return json.loads(REGISTRY.read_text(encoding="utf-8"))["members"]
+
+
+def schema_errors():
+    """Invariant 5: every declared value is in the closed set for its field.
+
+    Without this, `tier` accepts any string and a typo makes a new tier that
+    every other gate then treats as a legitimate category it has no rules for.
+    """
+    doc = json.loads(REGISTRY.read_text(encoding="utf-8"))
+    schema = json.loads(SCHEMA.read_text(encoding="utf-8"))
+    validator = jsonschema.Draft202012Validator(schema)
+    return [
+        f"{'/'.join(str(x) for x in e.absolute_path) or 'registry'}: {e.message}"
+        for e in sorted(validator.iter_errors(doc), key=lambda e: list(e.absolute_path))
+    ]
 
 
 def structural(members):
@@ -67,14 +99,15 @@ def structural(members):
 
     # 2 and 3: a field belongs to its tier and to no other.
     for m in members:
-        want = FIELDS_BY_TIER.get(m["tier"], set())
+        want = fields_for(m)
         for field in {"kind", "bom", "engine", "orchestrator"}:
             present = field in m
             allowed = field in want
+            what = m["tier"] if m["tier"] != "emulator" else f"{m['tier']}/{m.get('kind')}"
             if present and not allowed:
-                bad.append(f"{m['name']}: tier {m['tier']} must not carry `{field}`")
+                bad.append(f"{m['name']}: {what} must not carry `{field}`")
             if allowed and not present:
-                bad.append(f"{m['name']}: tier {m['tier']} must carry `{field}`")
+                bad.append(f"{m['name']}: {what} must carry `{field}`")
 
     # 4: one member per (engine, orchestrator, tier).
     seen = Counter(
@@ -161,6 +194,12 @@ def self_test():
         ("an emulator with no kind",
          [{"name": "e", "tier": "emulator", "status": "built", "ci": "required",
            "bom": True}]),
+        ("an engine emulator with no engine",
+         [{"name": "e", "tier": "emulator", "status": "built", "ci": "required",
+           "kind": "engine", "bom": True}]),
+        ("a gateway emulator carrying an engine",
+         [{"name": "g", "tier": "emulator", "status": "built", "ci": "required",
+           "kind": "gateway", "bom": True, "engine": "fabric"}]),
         ("a core carrying an engine",
          [{"name": "c", "tier": "core", "status": "built", "ci": "required",
            "engine": "fabric"}]),
@@ -171,7 +210,10 @@ def self_test():
             print(f"SELF-TEST FAILED: {label} was accepted")
             ok = False
     if structural(load()):
-        print("SELF-TEST FAILED: the real registry does not pass")
+        print("SELF-TEST FAILED: the real registry does not pass the shape rules")
+        ok = False
+    if schema_errors():
+        print("SELF-TEST FAILED: the real registry does not validate")
         ok = False
     print("self-test: the gate rejects each broken shape and accepts the registry" if ok else "")
     return 0 if ok else 1
@@ -188,7 +230,7 @@ def main():
         return self_test()
 
     members = load()
-    bad = structural(members)
+    bad = schema_errors() + structural(members)
     if args.bom:
         bad += check_bom(members)
 

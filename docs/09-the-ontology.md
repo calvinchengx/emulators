@@ -63,6 +63,12 @@ could not be read for:
 emulator, and every other emulator is cross-cutting, running in a stack
 without being what the stack is named for.
 
+**An `engine` emulator also declares which engine it serves**, so `targets` is
+a join on a field rather than a match on a name prefix. `fabric-emulator`
+begins with `fabric` today and that is a coincidence the ontology should not
+rest on. This was found by writing the map generator against this page: it
+reached for the emulator's `engine` and there was none.
+
 ### `bom`, and why it is not the same as `kind`
 
 `bom: true` means the member is one of the six `azure-emulators` certifies:
@@ -85,7 +91,7 @@ Five, and the set is closed. Each one says where it comes from.
 | relation | from → to | source |
 |---|---|---|
 | `pairs_with` | leaf ↔ platform | **derived** from equal (engine, orchestrator) |
-| `targets` | platform → emulator | **derived** from engine |
+| `targets` | platform → emulator | **derived**: joins the platform's `engine` to the emulator's |
 | `pins_by_tag` | leaf → core | **invariant**: every leaf, no exceptions |
 | `materialises_from` | platform → sources | **invariant**: every platform |
 | `certifies` | composition → emulator | **declared** `bom`, **checked** against `azure-emulators` |
@@ -125,7 +131,7 @@ These are the statements the gates enforce. Each names the gate.
 |---|---|---|
 | 1 | every `leaf` has exactly one `platform` with the same (engine, orchestrator), and the reverse | `check_ontology.py` |
 | 2 | `engine` and `orchestrator` appear on `leaf` and `platform` members and nowhere else | `check_ontology.py` |
-| 3 | `kind` appears on `emulator` members and nowhere else | `check_ontology.py` |
+| 3 | `kind` appears on `emulator` members and nowhere else, and `engine` on an emulator means `kind: engine` | `check_ontology.py` |
 | 4 | exactly one member per (engine, orchestrator, tier) — no duplicate cells | `check_ontology.py` |
 | 5 | every declared value is in the closed set for its field | `members.schema.json` |
 | 6 | `bom: true` matches what `azure-emulators` pins | `check_ontology.py --bom` |

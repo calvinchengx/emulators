@@ -34,6 +34,7 @@ export default defineConfig({
           items: [
             { slug: '02-the-emulators' },
             { slug: '03-the-data-product-matrix' },
+            { slug: '09-the-ontology' },
           ],
         },
         {

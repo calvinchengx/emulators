@@ -28,9 +28,9 @@
     {"name": "arm-emulator",               "tier": "emulator",    "status": "built", "ci": "required", "kind": "control-plane", "bom": true, "role": "ARM control plane + RBAC"},
     {"name": "azure-keyvault-emulator",    "tier": "emulator",    "status": "built", "ci": "required", "kind": "secrets",       "bom": true, "role": "Key Vault data plane"},
     {"name": "azure-apim-emulator",        "tier": "emulator",    "status": "built", "ci": "required", "kind": "gateway",       "bom": true, "role": "API Management"},
-    {"name": "fabric-emulator",            "tier": "emulator",    "status": "built", "ci": "required", "kind": "engine",        "bom": true, "role": "Microsoft Fabric + OneLake"},
-    {"name": "databricks-emulator",        "tier": "emulator",    "status": "built", "ci": "required", "kind": "engine",        "bom": true, "role": "Databricks workspace REST"},
-    {"name": "snowflake-emulator",         "tier": "emulator",    "status": "built", "ci": "required", "kind": "engine",        "bom": false, "role": "Snowflake account, adjacent to the family"},
+    {"name": "fabric-emulator",            "tier": "emulator",    "status": "built", "ci": "required", "engine": "fabric", "kind": "engine",        "bom": true, "role": "Microsoft Fabric + OneLake"},
+    {"name": "databricks-emulator",        "tier": "emulator",    "status": "built", "ci": "required", "engine": "databricks", "kind": "engine",        "bom": true, "role": "Databricks workspace REST"},
+    {"name": "snowflake-emulator",         "tier": "emulator",    "status": "built", "ci": "required", "engine": "snowflake", "kind": "engine",        "bom": false, "role": "Snowflake account, adjacent to the family"},
 
     {"name": "azure-emulators",            "tier": "composition", "status": "built", "ci": "required", "role": "The BOM, the family compose, the chain test"},
     {"name": "emulators",                  "tier": "hub",         "status": "built", "ci": "required", "reporter": "family-ci.yml", "role": "This repo: the ecosystem directory and docs site"},
