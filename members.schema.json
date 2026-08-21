@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "The emulator family registry",
+  "description": "Closed vocabularies for every declared field. Without this, `tier` accepts any string and a typo creates a new tier silently. See docs/09-the-ontology.md.",
+  "type": "object",
+  "required": ["owner", "members"],
+  "properties": {
+    "$comment": { "type": ["array", "string"] },
+    "owner": { "type": "string" },
+    "members": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/member" }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "member": {
+      "type": "object",
+      "required": ["name", "tier", "status", "ci"],
+      "properties": {
+        "name": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+        "tier": {
+          "enum": ["emulator", "composition", "hub", "sources", "core", "leaf", "platform"]
+        },
+        "status": { "enum": ["built", "reserved"] },
+        "ci": { "enum": ["required", "missing", "none"] },
+        "kind": {
+          "description": "Emulators only. `engine` is the one a platform targets; the rest are cross-cutting.",
+          "enum": ["engine", "identity", "control-plane", "secrets", "gateway"]
+        },
+        "bom": {
+          "description": "Emulators only. True for the six azure-emulators certifies. Checked against its published main, not taken on trust.",
+          "type": "boolean"
+        },
+        "engine": { "enum": ["fabric", "databricks", "snowflake"] },
+        "orchestrator": {
+          "enum": ["airflow3", "airflow-builtin", "notebook-pipelines", "jobs", "tasks"]
+        },
+        "role": { "type": "string" },
+        "reporter": { "type": "string" },
+        "conditional": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": { "properties": { "tier": { "const": "emulator" } }, "required": ["tier"] },
+          "then": { "required": ["kind", "bom"] },
+          "else": {
+            "properties": {
+              "kind": false,
+              "bom": false
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": { "tier": { "enum": ["leaf", "platform"] } },
+            "required": ["tier"]
+          },
+          "then": { "required": ["engine", "orchestrator"] },
+          "else": {
+            "properties": {
+              "engine": false,
+              "orchestrator": false
+            }
+          }
+        }
+      ]
+    }
+  }
+}
