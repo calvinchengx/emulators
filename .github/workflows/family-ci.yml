@@ -68,6 +68,20 @@ jobs:
       - name: BOM membership matches what azure-emulators stands up
         run: uv run --no-project --with jsonschema ./scripts/check_ontology.py --bom
 
+      # `ports` is declared here and published in seven compose files. The
+      # structural check above already refuses two members on one port; this
+      # one refuses a declaration the platform's published compose does not
+      # back, so the index a launcher reads cannot drift from what `up` maps.
+      - name: Declared ports match each platform's published compose
+        run: uv run --no-project --with jsonschema ./scripts/check_ontology.py --ports
+
+      # The verb contract in docs/09: the Makefile floor per tier, read from
+      # each member's published main. Self-test first, same reason as above.
+      - name: Every member answers its tier's verb floor
+        run: |
+          ./scripts/check_verbs.py --self-test
+          ./scripts/check_verbs.py
+
       # The map in README.md is generated from the same registry as the
       # tables. It was the last hand-drawn artefact here, and it showed seven
       # leaves as one node.

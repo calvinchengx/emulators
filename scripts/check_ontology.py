@@ -14,8 +14,9 @@ derivation, the ABSENCE is the error.
 
   ./scripts/check_ontology.py          the structural invariants (1-5)
   ./scripts/check_ontology.py --bom    also check `bom` against azure-emulators
+  ./scripts/check_ontology.py --ports  also check `ports` against each platform's compose
 
-`--bom` reaches the network. It is separate because a structural check should
+`--bom` and `--ports` reach the network. It is separate because a structural check should
 not fail when GitHub is unreachable, and because a gate that needs the network
 to say anything is one people learn to ignore.
 """
@@ -69,8 +70,10 @@ def fields_for(m):
     tier, kind = m["tier"], m.get("kind")
     if tier == "emulator":
         return {"kind", "bom"} | ({"engine"} if kind == "engine" else set())
-    if tier in ("leaf", "platform"):
+    if tier == "leaf":
         return {"engine", "orchestrator"}
+    if tier == "platform":
+        return {"engine", "orchestrator", "ports"}
     return set()
 
 
@@ -100,7 +103,7 @@ def structural(members):
     # 2 and 3: a field belongs to its tier and to no other.
     for m in members:
         want = fields_for(m)
-        for field in {"kind", "bom", "engine", "orchestrator"}:
+        for field in {"kind", "bom", "engine", "orchestrator", "ports"}:
             present = field in m
             allowed = field in want
             what = m["tier"] if m["tier"] != "emulator" else f"{m['tier']}/{m.get('kind')}"
@@ -131,6 +134,20 @@ def structural(members):
             bad.append(f"cell {cell[0]} / {cell[1]}: platform {halves['platform']} has no leaf")
         if "platform" not in halves:
             bad.append(f"cell {cell[0]} / {cell[1]}: leaf {halves['leaf']} has no platform")
+
+    # 10: no host port is published by two members. Two stacks that share a
+    # port cannot run at once, and the failure is `bind: address already in
+    # use` three screens into `up`, naming neither stack. Measured here as
+    # a set, because the registry is the only place that can see every
+    # platform at once; a single compose file cannot know what its siblings
+    # publish.
+    owners = defaultdict(list)
+    for m in members:
+        for svc, port in m.get("ports", {}).items():
+            owners[port].append(f"{m['name']}/{svc}")
+    for port, names in sorted(owners.items()):
+        if len(names) > 1:
+            bad.append(f"host port {port} is published by {len(names)} members: {', '.join(names)}")
 
     return bad
 
@@ -174,6 +191,75 @@ def check_bom(members):
     return bad
 
 
+# A platform's compose lives at one of two paths, by repo. Matched on the
+# host side of a published port only: `"18080:8080"` or `"${VAR:-18080}:8080"`.
+# A container-only `expose:` is not a host port and a launcher cannot reach it.
+COMPOSE_PATHS = ("docker-compose.yml", "compose/docker-compose.yml")
+COMPOSE_URL = "https://raw.githubusercontent.com/calvinchengx/{name}/main/{path}"
+HOST_PORT = re.compile(r'^\s+-\s+"?(?:\$\{[A-Z_]+:-(\d+)\}|(\d{4,5})):(\d+)"?', re.M)
+SERVICE = re.compile(r"^  ([a-z0-9-]+):\s*$")
+
+
+def published_ports(name):
+    """The host ports a platform's published compose maps, by service.
+
+    Returns None when no compose is found at either path, which is reported
+    as its own failure rather than as "publishes nothing": a platform with no
+    compose on main is a different defect from one whose ports moved.
+    """
+    for path in COMPOSE_PATHS:
+        try:
+            text = fetch(COMPOSE_URL.format(name=name, path=path))
+        except urllib.error.HTTPError as e:
+            if e.code == 404:
+                continue
+            raise
+        # A list, not a dict keyed by service: one container can publish two
+        # host ports (fabric-emulator maps REST and TDS), and a dict would
+        # keep the first and silently drop the second. Measured: it did.
+        found = []
+        service = None
+        for line in text.splitlines():
+            m = SERVICE.match(line)
+            if m:
+                service = m.group(1)
+            m = HOST_PORT.match(line)
+            if m and service:
+                found.append((service, int(m.group(1) or m.group(2))))
+        return found
+    return None
+
+
+def check_ports(members):
+    """`ports` is declared here and published there; the two must agree.
+
+    Compared on the SET of host ports, not on the service names: the
+    registry names a service the way a reader would (`fabric-emulator-tds`
+    for the second port one container publishes), while compose keys by
+    container. A port the compose maps and the registry omits is a stack a
+    launcher would start blind; a port the registry lists and the compose
+    no longer maps is a stale index. Both are reported, by name.
+    """
+    bad = []
+    for m in members:
+        if m["tier"] != "platform":
+            continue
+        found = published_ports(m["name"])
+        if found is None:
+            bad.append(f"{m['name']}: no compose at {' or '.join(COMPOSE_PATHS)} on main")
+            continue
+        declared = set(m["ports"].values())
+        actual = {port for _, port in found}
+        if declared != actual:
+            bad.append(
+                f"{m['name']}: ports disagree with its published compose: "
+                f"declared-not-published {sorted(declared - actual)}, "
+                f"published-not-declared {sorted(actual - declared)} "
+                f"(compose maps {sorted(found)})"
+            )
+    return bad
+
+
 def self_test():
     """Prove the gate fails on a registry it should reject.
 
@@ -203,6 +289,17 @@ def self_test():
         ("a core carrying an engine",
          [{"name": "c", "tier": "core", "status": "built", "ci": "required",
            "engine": "fabric"}]),
+        ("a platform with no ports",
+         [{"name": "p", "tier": "platform", "status": "built", "ci": "required",
+           "engine": "fabric", "orchestrator": "jobs"}]),
+        ("a leaf carrying ports",
+         [{"name": "l", "tier": "leaf", "status": "built", "ci": "required",
+           "engine": "fabric", "orchestrator": "jobs", "ports": {"x": 18080}}]),
+        ("two platforms publishing one host port",
+         [{"name": "p", "tier": "platform", "status": "built", "ci": "required",
+           "engine": "fabric", "orchestrator": "jobs", "ports": {"airflow": 18080}},
+          {"name": "q", "tier": "platform", "status": "built", "ci": "required",
+           "engine": "snowflake", "orchestrator": "jobs", "ports": {"ui": 18080}}]),
     ]
     ok = True
     for label, members in cases:
@@ -223,6 +320,8 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--bom", action="store_true",
                     help="also check `bom` against azure-emulators (needs the network)")
+    ap.add_argument("--ports", action="store_true",
+                    help="also check `ports` against each platform's published compose (needs the network)")
     ap.add_argument("--self-test", action="store_true")
     args = ap.parse_args()
 
@@ -233,6 +332,8 @@ def main():
     bad = schema_errors() + structural(members)
     if args.bom:
         bad += check_bom(members)
+    if args.ports:
+        bad += check_ports(members)
 
     if bad:
         for line in bad:
@@ -244,7 +345,8 @@ def main():
     emulators = [m for m in members if m["tier"] == "emulator"]
     print(f"ontology: {len(members)} members, {len(cells)} cells paired, "
           f"{sum(1 for m in emulators if m['bom'])} of {len(emulators)} emulators in the BOM"
-          + (" (checked against azure-emulators)" if args.bom else ""))
+          + (" (checked against azure-emulators)" if args.bom else "")
+          + (f", {sum(len(m.get('ports', {})) for m in members)} host ports checked against the platforms' compose" if args.ports else ""))
     return 0
 
 

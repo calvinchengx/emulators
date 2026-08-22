@@ -46,12 +46,12 @@
     {"name": "contoso-data-product-snowflake-tasks",            "tier": "leaf", "engine": "snowflake",  "orchestrator": "tasks",              "status": "built",    "ci": "required"},
     {"name": "contoso-data-product-snowflake-airflow3",         "tier": "leaf", "engine": "snowflake",  "orchestrator": "airflow3",           "status": "built",    "ci": "required"},
 
-    {"name": "fabric-platform-airflow3",            "tier": "platform", "engine": "fabric",     "orchestrator": "airflow3",           "status": "built",    "ci": "required"},
-    {"name": "fabric-platform-notebook-pipelines",  "tier": "platform", "engine": "fabric",     "orchestrator": "notebook-pipelines", "status": "built",    "ci": "required", "conditional": ["attribute.yml"]},
-    {"name": "fabric-platform-airflow-builtin",     "tier": "platform", "engine": "fabric",     "orchestrator": "airflow-builtin",    "status": "built",    "ci": "required"},
-    {"name": "databricks-platform-jobs",            "tier": "platform", "engine": "databricks", "orchestrator": "jobs",               "status": "built",    "ci": "required"},
-    {"name": "databricks-platform-airflow3",        "tier": "platform", "engine": "databricks", "orchestrator": "airflow3",           "status": "built",    "ci": "required"},
-    {"name": "snowflake-platform-tasks",            "tier": "platform", "engine": "snowflake",  "orchestrator": "tasks",              "status": "built",    "ci": "required"},
-    {"name": "snowflake-platform-airflow3",         "tier": "platform", "engine": "snowflake",  "orchestrator": "airflow3",           "status": "built",    "ci": "required"}
+    {"name": "fabric-platform-airflow3",            "tier": "platform", "engine": "fabric",     "orchestrator": "airflow3",           "status": "built",    "ci": "required", "ports": {"airflow": 18080}},
+    {"name": "fabric-platform-notebook-pipelines",  "tier": "platform", "engine": "fabric",     "orchestrator": "notebook-pipelines", "status": "built",    "ci": "required", "conditional": ["attribute.yml"], "ports": {"fabric-emulator": 9443, "fabric-emulator-tds": 11433, "sail": 50051}},
+    {"name": "fabric-platform-airflow-builtin",     "tier": "platform", "engine": "fabric",     "orchestrator": "airflow-builtin",    "status": "built",    "ci": "required", "ports": {"entra-emulator": 18443, "fabric-emulator": 19443, "airflow": 18085}},
+    {"name": "databricks-platform-jobs",            "tier": "platform", "engine": "databricks", "orchestrator": "jobs",               "status": "built",    "ci": "required", "ports": {"entra": 18473, "keyvault": 18474, "uc": 18471, "sail": 15070, "spark-agent": 18170, "databricks": 18470}},
+    {"name": "databricks-platform-airflow3",        "tier": "platform", "engine": "databricks", "orchestrator": "airflow3",           "status": "built",    "ci": "required", "ports": {"uc": 18476, "databricks": 18475, "airflow": 18082}},
+    {"name": "snowflake-platform-tasks",            "tier": "platform", "engine": "snowflake",  "orchestrator": "tasks",              "status": "built",    "ci": "required", "ports": {"snowflake": 18448}},
+    {"name": "snowflake-platform-airflow3",         "tier": "platform", "engine": "snowflake",  "orchestrator": "airflow3",           "status": "built",    "ci": "required", "ports": {"snowflake": 18449, "airflow": 18084}}
   ]
 }
