@@ -141,6 +141,33 @@ These are the statements the gates enforce. Each names the gate.
 | 10 | `ports` appears on `platform` members and nowhere else, and no host port is published by two members | `check_ontology.py` |
 | 11 | every platform's `ports` equals the host ports its published compose maps | `check_ontology.py --ports` |
 | 12 | every built member answers its tier's verb floor, read from its published Makefile | `check_verbs.py` |
+| 13 | a leaf is `contoso-data-product-<engine>-<orchestrator>`, a platform is `<engine>-platform-<orchestrator>`, an emulator is `<service>-emulator`; `azure-keyvault-emulator` and `azure-apim-emulator` are grandfathered by name | `check_ontology.py` |
+
+## Names
+
+Three patterns, one per runnable tier, and a name that breaks its pattern is
+a gate failure rather than a style remark:
+
+| tier | name |
+|---|---|
+| leaf | `contoso-data-product-<engine>-<orchestrator>` |
+| platform | `<engine>-platform-<orchestrator>` |
+| emulator | `<service>-emulator` |
+
+Leaf and platform names are **derived** from the member's `engine` and
+`orchestrator`, so the check is not "does this look right" but "does this
+repository's name agree with the cell it declares". A leaf named for Fabric
+and declared as Snowflake is the kind of mistake prose never catches.
+
+**Two emulators keep a prefix the rule does not have.** `azure-keyvault-emulator`
+and `azure-apim-emulator` were named before the pattern existed; their five
+siblings are `entra-`, `arm-`, `fabric-`, `databricks-` and
+`snowflake-emulator`. They are grandfathered **by name**, listed in the
+checker, and the reason is a cost the family has measured elsewhere: renaming
+a published image touches every pin, every compose, every link and every
+memory of it, and buys a reader nothing, since the registry's `tier` already
+says what each is. The exception is closed: a new emulator gets the
+unprefixed name, and the gate says so.
 
 ## `ports`: declared, then checked twice
 
