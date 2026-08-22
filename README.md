@@ -92,8 +92,11 @@ One product, every engine × orchestrator cell. Leaves are
 - **Run the family:** `docker compose up` in
   [azure-emulators](https://github.com/calvinchengx/azure-emulators), the
   certified set in one command.
-- **Run a data product:** a built platform's `make up PRODUCT=...`, for
-  example [fabric-platform-airflow3](https://github.com/calvinchengx/fabric-platform-airflow3).
+- **Run a data product:** `./family up fabric-airflow3` then
+  `./family witness fabric-airflow3`, from this repo with the siblings cloned
+  beside it. The launcher reads the registry for which platform pairs with
+  which leaf, which port it comes up on, and refuses a third stack the
+  Docker VM cannot hold. `./family ls` lists every cell and emulator.
 - **The full argument:** the
   [docs site](https://calvinchengx.github.io/emulators/), including why these
   emulators exist, what the evidence discipline proves, and how they compare
