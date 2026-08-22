@@ -276,6 +276,32 @@ def parse_ports(text):
     return found
 
 
+VENDOR_PORTS_URL = "https://raw.githubusercontent.com/calvinchengx/{name}/main/vendor-ports.json"
+
+
+def vendor_ports(name):
+    """Host ports a platform's GENERATED vendor fragment publishes, or {}.
+
+    The fragment is built at `make up` from contoso-sources and gitignored, so
+    it is in no committed compose and this gate could not see it. Three
+    platforms publish vendor ports; each now commits `vendor-ports.json`,
+    emitted by its own generator from the fragment it actually hands compose,
+    with a test in that repository failing when the file goes stale. Here we
+    read the committed file, which is the same discipline as reading compose:
+    published state, not a checkout.
+
+    A platform with no such file publishes no vendor ports. That is true of
+    the four whose vendors are container-internal, and it is checked rather
+    than assumed -- their generators emit no `ports` at all.
+    """
+    try:
+        return json.loads(fetch(VENDOR_PORTS_URL.format(name=name)))
+    except urllib.error.HTTPError as e:
+        if e.code == 404:
+            return {}
+        raise
+
+
 def check_ports(members):
     """`ports` is declared here and published there; the two must agree.
 
@@ -294,6 +320,9 @@ def check_ports(members):
         if found is None:
             bad.append(f"{m['name']}: no compose at {' or '.join(COMPOSE_PATHS)} on main")
             continue
+        found = found + [
+            (svc, port) for svc, ports in vendor_ports(m["name"]).items() for port in ports
+        ]
         declared = set(m["ports"].values())
         actual = {port for _, port in found}
         if declared != actual:
