@@ -1,0 +1,62 @@
+{
+  "$comment": [
+    "Third-party container images the family mirrors into its own registry.",
+    "",
+    "WHY THIS FILE EXISTS (G44). OpenMetadata ships from docker.getcollate.io, a",
+    "vendor registry backed by neither Docker Hub nor GHCR. Four repositories pull",
+    "it, every one of them on a nightly cron, so an outage there fails unattended",
+    "and reads as a broken governance step rather than as somebody else's",
+    "registry. Measured on 2026-08-22: two of seven acceptance runs died at",
+    "`make up` with a TLS handshake timeout, and the rerun died again with",
+    "`connection reset by peer`, so the bounded retry fabric-emulator already",
+    "carries would not have saved either.",
+    "",
+    "WHAT MAY GO IN HERE. An image the family DEPENDS ON at runtime and does not",
+    "build, whose registry is not one the family already trusts. Docker Hub and",
+    "GHCR are trusted, so opensearchproject/opensearch is deliberately absent: it",
+    "is on Hub, and mirroring it would add a copy to keep in step for no",
+    "availability gain.",
+    "",
+    "  upstream     the vendor reference, tag included",
+    "  mirror       the GHCR repository it is copied to",
+    "  index        the digest of the MIRROR's manifest index, recorded by",
+    "               `scripts/mirror_images.py --push` and enforced by --check",
+    "  upstream_index  the digest the copy was made FROM, so a tag that moves",
+    "               under us is visible rather than silently adopted",
+    "  platforms    the (os/arch) pairs the index must carry. Both images are",
+    "               multi-arch, and a mirror made with pull/tag/push instead of",
+    "               `buildx imagetools create` collapses the index to the",
+    "               runner's architecture -- which keeps CI green on amd64 while",
+    "               breaking every arm64 laptop. Recorded so the check can fail",
+    "               for it."
+  ],
+  "registry": "ghcr.io/calvinchengx",
+  "images": [
+    {
+      "upstream": "docker.getcollate.io/openmetadata/server:1.13.2",
+      "mirror": "openmetadata-server",
+      "index": null,
+      "upstream_index": null,
+      "platforms": ["linux/amd64", "linux/arm64"],
+      "used_by": [
+        "fabric-emulator",
+        "fabric-platform-notebook-pipelines",
+        "databricks-platform-jobs",
+        "snowflake-platform-tasks"
+      ]
+    },
+    {
+      "upstream": "docker.getcollate.io/openmetadata/postgresql:1.13.2",
+      "mirror": "openmetadata-postgresql",
+      "index": null,
+      "upstream_index": null,
+      "platforms": ["linux/amd64", "linux/arm64"],
+      "used_by": [
+        "fabric-emulator",
+        "fabric-platform-notebook-pipelines",
+        "databricks-platform-jobs",
+        "snowflake-platform-tasks"
+      ]
+    }
+  ]
+}

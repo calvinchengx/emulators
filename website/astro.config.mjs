@@ -49,6 +49,7 @@ export default defineConfig({
           items: [
             { slug: '06-getting-started' },
             { slug: '08-ci-status' },
+            { slug: '10-mirrored-images' },
             { slug: '07-roadmap' },
           ],
         },

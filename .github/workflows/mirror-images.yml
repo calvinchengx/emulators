@@ -1,0 +1,135 @@
+# Copy the third-party images the family depends on into the family's registry.
+#
+# G44. OpenMetadata ships from docker.getcollate.io, backed by neither Docker
+# Hub nor GHCR, and four repositories pull it on nightly crons. When it is
+# unavailable those nightlies go red for somebody else's reason, and the failure
+# reads as a broken governance step. Measured 2026-08-22: two of seven
+# acceptance runs died at `make up` with a TLS handshake timeout, and the rerun
+# died again with `connection reset by peer`.
+#
+# HERE RATHER THAN IN A CONSUMER, for the reason this repository exists: four
+# repositories across three engine families share the dependency and none of
+# them owns it. The hub is the only one that legitimately owns all of them, and
+# it already runs the family's other cross-repo job.
+name: Mirror third-party images
+
+on:
+  workflow_dispatch:
+  # WEEKLY, and it is a CHECK not a copy. `--check` re-reads what the registry
+  # serves and fails if a mirror vanished, moved, or lost an architecture --
+  # and it says so while somebody can still act, rather than at 06:00 in a
+  # platform's nightly. Copying stays manual: adopting a moved upstream tag is
+  # a decision, not a schedule.
+  schedule:
+    - cron: '17 5 * * 1'
+  pull_request:
+    paths:
+      - 'mirrors.json'
+      - 'scripts/mirror_images.py'
+      - '.github/workflows/mirror-images.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mirror-images
+  cancel-in-progress: false
+
+jobs:
+  check:
+    name: Every mirror matches its record
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      # A gate nobody has watched fail is a gate nobody knows the direction of.
+      # This runs first so a broken checker is never mistaken for healthy
+      # mirrors.
+      - name: Self-test the gate before trusting it
+        run: ./scripts/mirror_images.py --self-test
+
+      # Reads GHCR anonymously, exactly as a consumer's `make up` does on a
+      # laptop. That is the property under test: if this needs a login the
+      # package is private and every consumer is broken, which is precisely the
+      # failure the report names.
+      #
+      # BLOCKING ON THE SCHEDULE AND ON DISPATCH, a warning on a pull request,
+      # and the split is the one this repository already draws for the evidence
+      # table. A PR here changes the declaration or the checker; whether the
+      # registry is currently serving a mirror is a fact about the world at
+      # 05:17 on a Monday, and a red that the PR's author did not cause is a red
+      # people learn to click past. The scheduled run is the one that must go
+      # red, and it does.
+      - name: The mirrors are where the family says they are
+        if: github.event_name != 'pull_request'
+        run: ./scripts/mirror_images.py --check
+
+      - name: The mirrors are where the family says they are (advisory)
+        if: github.event_name == 'pull_request'
+        run: |
+          if ! ./scripts/mirror_images.py --check; then
+            echo "::warning title=A mirror is missing or moved::Not necessarily \
+            this PR's doing. Run the push job, and check the packages are \
+            public. The scheduled run fails on this."
+          fi
+
+  push:
+    name: Copy upstream into the mirror
+    # MANUAL ONLY. A scheduled copy would adopt a moved upstream tag silently,
+    # which is the one thing the recorded digest exists to prevent.
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: GHCR login
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+      - name: Self-test the gate before trusting it
+        run: ./scripts/mirror_images.py --self-test
+
+      # `buildx imagetools create`, which copies the manifest INDEX. Both
+      # images are linux/amd64 + linux/arm64, and pull/tag/push would collapse
+      # that to the runner's architecture -- green here, broken on every arm64
+      # laptop. The script re-reads the registry afterwards and fails if the
+      # index it finds is not multi-arch.
+      - name: Copy, then record what the registry actually serves
+        run: ./scripts/mirror_images.py --push
+
+      - name: Commit the digests
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet mirrors.json; then
+            echo "the recorded digests already matched; nothing to commit"
+            exit 0
+          fi
+          git commit -qm "mirror: record the digests GHCR serves" mirrors.json
+          git pull --rebase --quiet origin main
+          git push origin HEAD:main
+          git --no-pager show --stat HEAD >> "$GITHUB_STEP_SUMMARY"
+
+      # THE STEP THAT CANNOT BE AUTOMATED, said out loud rather than left to be
+      # discovered by a consumer. A new GHCR package is PRIVATE, and making one
+      # public needs `admin:packages`, which no workflow token carries.
+      - name: Say what a human still has to do
+        run: |
+          {
+            echo "### If these packages are new, they are PRIVATE"
+            echo
+            echo "A first push creates a private package and no workflow token can"
+            echo "change that. Until someone with the account flips them, every"
+            echo "consumer's \`make up\` will fail to pull -- including on laptops."
+            echo
+            echo '  https://github.com/users/calvinchengx/packages/container/openmetadata-server/settings'
+            echo '  https://github.com/users/calvinchengx/packages/container/openmetadata-postgresql/settings'
+            echo
+            echo "The \`check\` job reads GHCR anonymously, so it stays red until they are public."
+          } >> "$GITHUB_STEP_SUMMARY"
