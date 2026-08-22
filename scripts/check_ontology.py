@@ -225,7 +225,15 @@ def check_bom(members):
 # A container-only `expose:` is not a host port and a launcher cannot reach it.
 COMPOSE_PATHS = ("docker-compose.yml", "compose/docker-compose.yml")
 COMPOSE_URL = "https://raw.githubusercontent.com/calvinchengx/{name}/main/{path}"
+# Two spellings of a published port, and the gate must read both. The block
+# form is one mapping per line under `ports:`; the inline form is
+# `ports: ["8443:8443", ...]` on the `ports:` line itself. A first version
+# read only the block form and reported a platform as publishing three ports
+# when its compose published five: `family up` then failed on a port the
+# registry said nobody used. Measured, not assumed.
 HOST_PORT = re.compile(r'^\s+-\s+"?(?:\$\{[A-Z_]+:-(\d+)\}|(\d{4,5})):(\d+)"?', re.M)
+INLINE_PORTS = re.compile(r'^\s+ports:\s*\[(.*)\]', re.M)
+INLINE_ONE = re.compile(r'"?(?:\$\{[A-Z_]+:-(\d+)\}|(\d{4,5})):(\d+)"?')
 SERVICE = re.compile(r"^  ([a-z0-9-]+):\s*$")
 
 
@@ -246,17 +254,52 @@ def published_ports(name):
         # A list, not a dict keyed by service: one container can publish two
         # host ports (fabric-emulator maps REST and TDS), and a dict would
         # keep the first and silently drop the second. Measured: it did.
-        found = []
-        service = None
-        for line in text.splitlines():
-            m = SERVICE.match(line)
-            if m:
-                service = m.group(1)
-            m = HOST_PORT.match(line)
-            if m and service:
-                found.append((service, int(m.group(1) or m.group(2))))
-        return found
+        return parse_ports(text)
     return None
+
+
+def parse_ports(text):
+    """The (service, host port) pairs a compose text publishes, both spellings."""
+    found = []
+    service = None
+    for line in text.splitlines():
+        m = SERVICE.match(line)
+        if m:
+            service = m.group(1)
+        m = HOST_PORT.match(line)
+        if m and service:
+            found.append((service, int(m.group(1) or m.group(2))))
+        m = INLINE_PORTS.match(line)
+        if m and service:
+            for one in INLINE_ONE.finditer(m.group(1)):
+                found.append((service, int(one.group(1) or one.group(2))))
+    return found
+
+
+VENDOR_PORTS_URL = "https://raw.githubusercontent.com/calvinchengx/{name}/main/vendor-ports.json"
+
+
+def vendor_ports(name):
+    """Host ports a platform's GENERATED vendor fragment publishes, or {}.
+
+    The fragment is built at `make up` from contoso-sources and gitignored, so
+    it is in no committed compose and this gate could not see it. Three
+    platforms publish vendor ports; each now commits `vendor-ports.json`,
+    emitted by its own generator from the fragment it actually hands compose,
+    with a test in that repository failing when the file goes stale. Here we
+    read the committed file, which is the same discipline as reading compose:
+    published state, not a checkout.
+
+    A platform with no such file publishes no vendor ports. That is true of
+    the four whose vendors are container-internal, and it is checked rather
+    than assumed -- their generators emit no `ports` at all.
+    """
+    try:
+        return json.loads(fetch(VENDOR_PORTS_URL.format(name=name)))
+    except urllib.error.HTTPError as e:
+        if e.code == 404:
+            return {}
+        raise
 
 
 def check_ports(members):
@@ -277,6 +320,9 @@ def check_ports(members):
         if found is None:
             bad.append(f"{m['name']}: no compose at {' or '.join(COMPOSE_PATHS)} on main")
             continue
+        found = found + [
+            (svc, port) for svc, ports in vendor_ports(m["name"]).items() for port in ports
+        ]
         declared = set(m["ports"].values())
         actual = {port for _, port in found}
         if declared != actual:
@@ -343,6 +389,15 @@ def self_test():
         if not structural(members):
             print(f"SELF-TEST FAILED: {label} was accepted")
             ok = False
+    sample = (
+        "services:\n  a:\n    ports: [\"8443:8443\", \"${X:-8444}:8444\"]\n"
+        "  b:\n    ports:\n      - \"9443:9443\"\n      - \"${Y:-11433}:1433\"\n      - 50051:50051\n"
+    )
+    got = sorted(parse_ports(sample))
+    want = [("a", 8443), ("a", 8444), ("b", 9443), ("b", 11433), ("b", 50051)]
+    if got != want:
+        print(f"SELF-TEST FAILED: compose ports parsed as {got}, wanted {want}")
+        ok = False
     if structural(load()):
         print("SELF-TEST FAILED: the real registry does not pass the shape rules")
         ok = False

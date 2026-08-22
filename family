@@ -30,6 +30,7 @@ Stdlib only, on purpose: it is the first thing a newcomer runs.
 import argparse
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -180,6 +181,54 @@ def run(cmd, dry):
     return subprocess.call(cmd)
 
 
+def project_of(target, root, members):
+    """The compose project name for a target's stack, or None if not running.
+
+    Found by asking which running project's working_dir belongs to this
+    member, NOT by matching the repo path exactly: compose's working_dir is
+    wherever the compose file lives, and three platforms keep theirs in a
+    `compose/` subdirectory. An exact match silently found nothing there.
+    """
+    for project, wd in running_projects().items():
+        if member_of(wd, root, members) == target.repo:
+            return project
+    return None
+
+
+def actual_ports(target, docker_ps=None, project=None):
+    """What the containers ACTUALLY publish, falling back to the declaration.
+
+    The registry declares the compose DEFAULTS, and a compose that spells a
+    port `${ENTRA_PORT:-8443}` publishes whatever the environment says. A
+    first version printed the declaration unconditionally and told a reader
+    `8443` while the container was on `18443` -- wrong at precisely the moment
+    they had to shift ports, which is the moment they most need it right.
+    Docker is the authority once the stack is up; the declaration is only the
+    answer when nothing is running to ask.
+    """
+    if docker_ps is None:
+        if not shutil.which("docker"):
+            return sorted(target.ports.items())
+        if project is None:
+            return sorted(target.ports.items())
+        out = subprocess.run(
+            ["docker", "ps", "--filter", f"label=com.docker.compose.project={project}",
+             "--format", '{{.Label "com.docker.compose.service"}}\t{{.Ports}}'],
+            capture_output=True, text=True,
+        )
+        docker_ps = out.stdout if out.returncode == 0 else ""
+    live = {}
+    for line in docker_ps.splitlines():
+        if "\t" not in line:
+            continue
+        svc, ports = line.split("\t", 1)
+        for m in re.finditer(r"0\.0\.0\.0:(\d+)->", ports):
+            live.setdefault(svc, []).append(int(m.group(1)))
+    if not live:
+        return sorted(target.ports.items())
+    return sorted((svc, p) for svc, ps in live.items() for p in sorted(set(ps)))
+
+
 def cmd_ls(members, root):
     cells = cells_of(members)
     print("cells  (./family up <cell>)")
@@ -242,7 +291,7 @@ def main(argv=None):
         guard(t, root, members, args.force)
     rc = run(make_cmd(t, args.verb, root), args.dry_run)
     if rc == 0 and args.verb == "up" and t.ports:
-        for svc, port in t.ports.items():
+        for svc, port in actual_ports(t, project=project_of(t, root, members)):
             print(f"  {svc:20} http://localhost:{port}")
     return rc
 
@@ -295,7 +344,12 @@ def self_test():
     expect("a stack under the root but not a member is still counted",
            member_of("/r/data-agent-service", root, members) is None)
 
-    print("self-test: resolution, the make line and the two-stack guard all behave" if ok else "")
+    expect("actual ports come from docker when the stack is up",
+           actual_ports(t, "airflow\t0.0.0.0:18099->8080/tcp, [::]:18099->8080/tcp\n") == [("airflow", 18099)])
+    expect("and fall back to the declaration when nothing is running",
+           actual_ports(t, "") == [("airflow", 18080)])
+
+    print("self-test: resolution, the make line, the guard and port reporting all behave" if ok else "")
     return 0 if ok else 1
 
 
