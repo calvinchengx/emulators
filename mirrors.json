@@ -35,9 +35,12 @@
     {
       "upstream": "docker.getcollate.io/openmetadata/server:1.13.2",
       "mirror": "openmetadata-server",
-      "index": null,
-      "upstream_index": null,
-      "platforms": ["linux/amd64", "linux/arm64"],
+      "index": "sha256:f5cdd8b6223b47acbce76b6036a8ae802967dc297732846bedc911b05ae9d300",
+      "upstream_index": "sha256:f5cdd8b6223b47acbce76b6036a8ae802967dc297732846bedc911b05ae9d300",
+      "platforms": [
+        "linux/amd64",
+        "linux/arm64"
+      ],
       "used_by": [
         "fabric-emulator",
         "fabric-platform-notebook-pipelines",
@@ -48,9 +51,12 @@
     {
       "upstream": "docker.getcollate.io/openmetadata/postgresql:1.13.2",
       "mirror": "openmetadata-postgresql",
-      "index": null,
-      "upstream_index": null,
-      "platforms": ["linux/amd64", "linux/arm64"],
+      "index": "sha256:7c71755ed605fbe7f2687110b5604ff114e28d94174f3e9ae4f208780d1c805b",
+      "upstream_index": "sha256:7c71755ed605fbe7f2687110b5604ff114e28d94174f3e9ae4f208780d1c805b",
+      "platforms": [
+        "linux/amd64",
+        "linux/arm64"
+      ],
       "used_by": [
         "fabric-emulator",
         "fabric-platform-notebook-pipelines",
