@@ -62,23 +62,32 @@ usually the first thing that blocks local development.
 
 ## Door 3: a working data product
 
-Start from a built platform and swap the product for your own. A platform takes
-`PRODUCT=<path>` and contains no product logic of its own, with one exception
-noted below.
+One product, seven cells of engine × orchestrator, and one command that knows
+which repositories make a cell, which verb runs it and which port it answers
+on. It reads all three from [the registry](09-the-ontology.md), so it cannot
+be wrong about any of them, and it refuses a third stack because the Docker
+VM this was measured on holds two.
 
-| Platform | What it demonstrates |
-|---|---|
-| [fabric-platform-notebook-pipelines](https://github.com/calvinchengx/fabric-platform-notebook-pipelines) | The fullest one: four vendors, full medallion, semantic model, Power BI, OpenMetadata lineage. Carries its product inline rather than taking `PRODUCT=` |
-| [fabric-platform-airflow3](https://github.com/calvinchengx/fabric-platform-airflow3) | The platform reduced to essentials: Airflow 3 plus a pinnable Fabric target, no product inside it |
-| [databricks-platform-jobs](https://github.com/calvinchengx/databricks-platform-jobs) | The same product on Databricks Jobs, with Unity Catalog |
-| [snowflake-platform-tasks](https://github.com/calvinchengx/snowflake-platform-tasks) | Gold-only on Snowflake, switchable to a real account |
+```sh
+git clone https://github.com/calvinchengx/emulators
+cd emulators
+./family ls                          # every cell, its two repos, its ports
+./family up fabric-airflow3          # tells you which siblings to clone, if any
+./family witness fabric-airflow3     # the medallion, exit 0 only if the numbers hold
+./family down fabric-airflow3
+```
 
-The pieces they compose:
+A cell is `<engine>-<orchestrator>`; naming either of its repositories means
+the same thing. `./family ps` says what is running and whose it is. The
+emulators answer the same verbs on their own: `./family up entra-emulator`.
+
+What each cell demonstrates is in [the matrix](03-the-data-product-matrix.md).
+Every platform takes `PRODUCT=<path>` and holds no product logic of its own,
+which a test in each enforces; the pieces they compose are
 [contoso-sources](https://github.com/calvinchengx/contoso-sources) for the
 vendor systems and
 [contoso-data-product](https://github.com/calvinchengx/contoso-data-product)
-for the transforms, contracts and expected numbers. See
-[the matrix](03-the-data-product-matrix.md).
+for the transforms, contracts and expected numbers.
 
 ## Pointing an AI agent at this
 

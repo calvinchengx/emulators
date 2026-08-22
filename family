@@ -1,0 +1,303 @@
+#!/usr/bin/env python3
+"""family: one command for the whole ecosystem, driven by the registry.
+
+WHAT THIS IS FOR. To run a cell of the matrix you had to know four things:
+which platform pairs with which leaf, which Makefile to run, which verb that
+repo spells "run it and check" with, and which port it comes up on. All four
+now live in members.json or are enforced by its gates, so a launcher can read
+them and cannot be wrong about any of them.
+
+  ./family ls                       every cell, emulator and port
+  ./family ps                       which stacks are running, by member
+  ./family up fabric-airflow3       start a cell (its platform, pointed at its leaf)
+  ./family witness fabric-airflow3  run the medallion and fail if it fails
+  ./family logs fabric-airflow3
+  ./family down fabric-airflow3
+  ./family up entra-emulator        an emulator on its own, the same verbs
+
+A target is a cell, `<engine>-<orchestrator>`, or any member name: naming the
+leaf or the platform of a cell means the cell. Repos are expected beside this
+one, under the directory that contains it, or under FAMILY_ROOT / --root.
+
+TWO STACKS, NOT THREE. The Docker VM on the machine this was written on holds
+16 GiB, and the third family stack did not fail with "out of memory": two of
+its containers were OOM-killed and the symptom was silver dbt tasks hanging
+while Sail retried an object store that had died. `up` refuses when two other
+compose projects are already running, names them, and takes --force.
+
+Stdlib only, on purpose: it is the first thing a newcomer runs.
+"""
+import argparse
+import json
+import os
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent
+REGISTRY = HERE / "members.json"
+GITHUB = "https://github.com/calvinchengx"
+MAX_STACKS = 2
+
+VERBS_CELL = ("up", "down", "logs", "doctor", "witness")
+VERBS_EMULATOR = ("up", "down", "logs", "doctor")
+
+
+def load_members(path=REGISTRY):
+    return json.loads(path.read_text(encoding="utf-8"))["members"]
+
+
+def cells_of(members):
+    """(engine, orchestrator) -> {'leaf': name, 'platform': name, 'ports': {...}}."""
+    cells = {}
+    for m in members:
+        if m["tier"] in ("leaf", "platform"):
+            c = cells.setdefault((m["engine"], m["orchestrator"]), {})
+            c[m["tier"]] = m["name"]
+            if m["tier"] == "platform":
+                c["ports"] = m.get("ports", {})
+    return cells
+
+
+def cell_id(key):
+    return f"{key[0]}-{key[1]}"
+
+
+class Target:
+    """What a command line argument resolved to: a cell or an emulator."""
+
+    def __init__(self, kind, name, leaf=None, platform=None, ports=None):
+        self.kind, self.name = kind, name
+        self.leaf, self.platform, self.ports = leaf, platform, ports or {}
+
+    @property
+    def repo(self):
+        return self.platform if self.kind == "cell" else self.name
+
+    def __repr__(self):
+        return f"Target({self.kind}, {self.name})"
+
+
+def resolve(arg, members):
+    """A cell id, a leaf name, a platform name, or an emulator name.
+
+    Raises SystemExit with the list of valid targets on a miss, rather than
+    returning None: an unknown target printing nothing would look like a
+    successful no-op, which is the failure every gate in this repo exists
+    to refuse.
+    """
+    cells = cells_of(members)
+    for key, c in cells.items():
+        if arg in (cell_id(key), c.get("leaf"), c.get("platform")):
+            if "leaf" not in c or "platform" not in c:
+                raise SystemExit(f"{cell_id(key)} is half a cell: {c}; the ontology gate should have refused this registry")
+            return Target("cell", cell_id(key), c["leaf"], c["platform"], c["ports"])
+    for m in members:
+        if m["name"] == arg and m["tier"] == "emulator":
+            return Target("emulator", arg)
+    valid = sorted(cell_id(k) for k in cells) + sorted(m["name"] for m in members if m["tier"] == "emulator")
+    raise SystemExit(f"no such target: {arg}\nvalid targets:\n  " + "\n  ".join(valid))
+
+
+def checkout(root, name):
+    return root / name
+
+
+def require_checkouts(root, names):
+    missing = [n for n in names if not (checkout(root, n) / "Makefile").exists()]
+    if missing:
+        lines = [f"  git clone {GITHUB}/{n} {checkout(root, n)}" for n in missing]
+        raise SystemExit(
+            f"{len(missing)} checkout(s) missing under {root} (set FAMILY_ROOT or --root if they live elsewhere):\n"
+            + "\n".join(lines)
+        )
+
+
+def running_projects(docker_ps=None):
+    """Compose projects with at least one running container: {project: working_dir}.
+
+    Read from the labels compose stamps on every container, not from
+    `docker compose ls`, which reports only projects whose compose file it
+    can still find from the current directory.
+    """
+    if docker_ps is None:
+        if not shutil.which("docker"):
+            return {}
+        out = subprocess.run(
+            ["docker", "ps", "--format",
+             '{{.Label "com.docker.compose.project"}}\t{{.Label "com.docker.compose.project.working_dir"}}'],
+            capture_output=True, text=True,
+        )
+        if out.returncode != 0:
+            return {}
+        docker_ps = out.stdout
+    projects = {}
+    for line in docker_ps.splitlines():
+        if "\t" not in line:
+            continue
+        project, wd = line.split("\t", 1)
+        if project:
+            projects[project] = wd
+    return projects
+
+
+def member_of(working_dir, root, members):
+    """Which member a compose working_dir belongs to, by path, or None."""
+    try:
+        rel = Path(working_dir).resolve().relative_to(root.resolve())
+    except (ValueError, OSError):
+        return None
+    head = rel.parts[0] if rel.parts else None
+    return head if any(m["name"] == head for m in members) else None
+
+
+def guard(target, root, members, force, docker_ps=None):
+    """Refuse a third stack. Returns the list of OTHER running projects."""
+    projects = running_projects(docker_ps)
+    others = {p: wd for p, wd in projects.items() if member_of(wd, root, members) != target.repo}
+    if len(others) >= MAX_STACKS and not force:
+        names = ", ".join(f"{p} ({member_of(wd, root, members) or wd})" for p, wd in sorted(others.items()))
+        raise SystemExit(
+            f"{len(others)} compose projects are already running: {names}\n"
+            f"The Docker VM holds {MAX_STACKS}; a third is OOM-killed mid-run and looks like a hung pipeline.\n"
+            f"Bring one down (./family down <target>) or pass --force."
+        )
+    return others
+
+
+def make_cmd(target, verb, root):
+    cmd = ["make", "-C", str(checkout(root, target.repo)), verb]
+    if target.kind == "cell":
+        cmd.append(f"PRODUCT={checkout(root, target.leaf)}")
+    return cmd
+
+
+def run(cmd, dry):
+    print("+ " + " ".join(cmd), flush=True)
+    if dry:
+        return 0
+    return subprocess.call(cmd)
+
+
+def cmd_ls(members, root):
+    cells = cells_of(members)
+    print("cells  (./family up <cell>)")
+    for key in sorted(cells):
+        c = cells[key]
+        ports = " ".join(f"{k}:{v}" for k, v in c.get("ports", {}).items())
+        here = "" if (checkout(root, c["platform"]) / "Makefile").exists() and (checkout(root, c["leaf"]) / "Makefile").exists() else "  (not cloned)"
+        print(f"  {cell_id(key):30} {c['platform']:36} + {c['leaf']:48} {ports}{here}")
+    print("emulators  (./family up <name>)")
+    for m in members:
+        if m["tier"] == "emulator":
+            here = "" if (checkout(root, m["name"]) / "Makefile").exists() else "  (not cloned)"
+            print(f"  {m['name']:30} {m.get('role', '')}{here}")
+    return 0
+
+
+def cmd_ps(members, root):
+    projects = running_projects()
+    if not projects:
+        print("no compose projects running")
+        return 0
+    for p, wd in sorted(projects.items()):
+        who = member_of(wd, root, members)
+        print(f"  {p:30} {who or '(not a family member)':36} {wd}")
+    n = len(projects)
+    print(f"{n} running; the VM holds {MAX_STACKS}")
+    return 0
+
+
+def main(argv=None):
+    ap = argparse.ArgumentParser(prog="family", description=__doc__.split("\n\n")[0])
+    ap.add_argument("verb", nargs="?", choices=("ls", "ps") + VERBS_CELL)
+    ap.add_argument("target", nargs="?")
+    ap.add_argument("--root", default=os.environ.get("FAMILY_ROOT", str(HERE.parent)),
+                    help="directory holding the sibling checkouts (default: this repo's parent, or FAMILY_ROOT)")
+    ap.add_argument("--force", action="store_true", help="start a third stack anyway")
+    ap.add_argument("--dry-run", action="store_true", help="print the make command and stop")
+    ap.add_argument("--self-test", action="store_true")
+    args = ap.parse_args(argv)
+    if args.self_test:
+        return self_test()
+    if not args.verb:
+        ap.error("a verb is required: ls, ps, up, down, logs, doctor, witness")
+
+    members = load_members()
+    root = Path(args.root)
+    if args.verb == "ls":
+        return cmd_ls(members, root)
+    if args.verb == "ps":
+        return cmd_ps(members, root)
+    if not args.target:
+        ap.error(f"{args.verb} needs a target; ./family ls shows them")
+
+    t = resolve(args.target, members)
+    if t.kind == "emulator" and args.verb not in VERBS_EMULATOR:
+        raise SystemExit(f"{t.name} is an emulator; `witness` is a cell's verb (./family ls)")
+    require_checkouts(root, [t.leaf, t.platform] if t.kind == "cell" else [t.name])
+
+    if args.verb == "up":
+        guard(t, root, members, args.force)
+    rc = run(make_cmd(t, args.verb, root), args.dry_run)
+    if rc == 0 and args.verb == "up" and t.ports:
+        for svc, port in t.ports.items():
+            print(f"  {svc:20} http://localhost:{port}")
+    return rc
+
+
+def self_test():
+    """Prove resolution and the guard in the directions that matter."""
+    members = [
+        {"name": "fabric-emulator", "tier": "emulator", "status": "built", "ci": "required",
+         "kind": "engine", "engine": "fabric", "bom": True},
+        {"name": "contoso-data-product-fabric-airflow3", "tier": "leaf", "status": "built", "ci": "required",
+         "engine": "fabric", "orchestrator": "airflow3"},
+        {"name": "fabric-platform-airflow3", "tier": "platform", "status": "built", "ci": "required",
+         "engine": "fabric", "orchestrator": "airflow3", "ports": {"airflow": 18080}},
+    ]
+    root = Path("/r")
+    ok = True
+
+    def expect(label, cond):
+        nonlocal ok
+        if not cond:
+            print(f"SELF-TEST FAILED: {label}")
+            ok = False
+
+    for arg in ("fabric-airflow3", "contoso-data-product-fabric-airflow3", "fabric-platform-airflow3"):
+        t = resolve(arg, members)
+        expect(f"{arg} resolves to the cell", t.kind == "cell" and t.platform == "fabric-platform-airflow3")
+    expect("the emulator resolves", resolve("fabric-emulator", members).kind == "emulator")
+    try:
+        resolve("nope", members)
+        expect("an unknown target is refused", False)
+    except SystemExit as e:
+        expect("the refusal lists valid targets", "fabric-airflow3" in str(e) and "fabric-emulator" in str(e))
+
+    t = resolve("fabric-airflow3", members)
+    cmd = make_cmd(t, "witness", root)
+    expect("the cell's make runs in the platform, pointed at the leaf",
+           cmd[:3] == ["make", "-C", "/r/fabric-platform-airflow3"] and cmd[-1] == "PRODUCT=/r/contoso-data-product-fabric-airflow3")
+    expect("an emulator's make passes no PRODUCT", "PRODUCT" not in " ".join(make_cmd(resolve("fabric-emulator", members), "up", root)))
+
+    two_others = "a\t/r/x\nb\t/elsewhere/y\n"
+    try:
+        guard(t, root, members, force=False, docker_ps=two_others)
+        expect("two other stacks refuse a third", False)
+    except SystemExit as e:
+        expect("the refusal names both projects", "a (" in str(e) and "b (" in str(e))
+    expect("--force overrides", len(guard(t, root, members, force=True, docker_ps=two_others)) == 2)
+    mine_plus_one = "airflow-fabric\t/r/fabric-platform-airflow3\nb\t/elsewhere/y\n"
+    expect("the target's own stack does not count against it",
+           len(guard(t, root, members, force=False, docker_ps=mine_plus_one)) == 1)
+    expect("a stack under the root but not a member is still counted",
+           member_of("/r/data-agent-service", root, members) is None)
+
+    print("self-test: resolution, the make line and the two-stack guard all behave" if ok else "")
+    return 0 if ok else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

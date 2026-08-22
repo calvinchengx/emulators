@@ -82,6 +82,15 @@ jobs:
           ./scripts/check_verbs.py --self-test
           ./scripts/check_verbs.py
 
+      # The launcher is the consumer of everything above: pairs, verbs and
+      # ports. Its self-test covers resolution, the make line it builds and
+      # the two-stack guard with injected `docker ps` output; `ls` proves it
+      # reads the committed registry without a Docker daemon.
+      - name: The launcher resolves every cell from the registry
+        run: |
+          ./family --self-test
+          ./family ls
+
       # The map in README.md is generated from the same registry as the
       # tables. It was the last hand-drawn artefact here, and it showed seven
       # leaves as one node.
