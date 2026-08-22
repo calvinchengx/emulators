@@ -224,6 +224,19 @@ def check_bom(members):
 # host side of a published port only: `"18080:8080"` or `"${VAR:-18080}:8080"`.
 # A container-only `expose:` is not a host port and a launcher cannot reach it.
 COMPOSE_PATHS = ("docker-compose.yml", "compose/docker-compose.yml")
+# A platform can pass compose MORE than one file. Three keep a
+# `compose/governance.yml` and one a `compose/terminal.yml`, each publishing
+# host ports of its own, and reading only the main file missed them: this gate
+# said `fabric-platform-notebook-pipelines` published no 8585 while its
+# OpenMetadata bound exactly that, and `up` failed on `port is already
+# allocated` against a port the registry had never heard of. Found by running
+# the launcher, not by reading this file.
+#
+# The extra files are DISCOVERED rather than listed: a fourth one added
+# tomorrow is published tomorrow, and a list here would be a second place to
+# remember. The API lists the directory; a 404 means the platform keeps no
+# compose/ directory, which is true of the four single-file ones.
+COMPOSE_DIR_API = "https://api.github.com/repos/calvinchengx/{name}/contents/compose?ref=main"
 COMPOSE_URL = "https://raw.githubusercontent.com/calvinchengx/{name}/main/{path}"
 # Two spellings of a published port, and the gate must read both. The block
 # form is one mapping per line under `ports:`; the inline form is
@@ -237,25 +250,58 @@ INLINE_ONE = re.compile(r'"?(?:\$\{[A-Z_]+:-(\d+)\}|(\d{4,5})):(\d+)"?')
 SERVICE = re.compile(r"^  ([a-z0-9-]+):\s*$")
 
 
+def compose_files(name):
+    """Every compose file a platform ships: the main one, plus any in compose/.
+
+    The main file first, then the rest of `compose/` sorted, so a failure
+    message reads in a stable order.
+    """
+    paths = []
+    for path in COMPOSE_PATHS:
+        try:
+            fetch(COMPOSE_URL.format(name=name, path=path))
+        except urllib.error.HTTPError as e:
+            if e.code == 404:
+                continue
+            raise
+        paths.append(path)
+        break
+    try:
+        listing = json.loads(fetch(COMPOSE_DIR_API.format(name=name)))
+    except urllib.error.HTTPError as e:
+        if e.code != 404:
+            raise
+        listing = []
+    for entry in sorted(listing, key=lambda e: e["name"]):
+        path = f"compose/{entry['name']}"
+        if entry["name"].endswith((".yml", ".yaml")) and path not in paths:
+            paths.append(path)
+    return paths
+
+
 def published_ports(name):
     """The host ports a platform's published compose maps, by service.
 
-    Returns None when no compose is found at either path, which is reported
-    as its own failure rather than as "publishes nothing": a platform with no
-    compose on main is a different defect from one whose ports moved.
+    Returns None when no compose is found at all, which is reported as its own
+    failure rather than as "publishes nothing": a platform with no compose on
+    main is a different defect from one whose ports moved.
+
+    A list of pairs, not a dict keyed by service: one container can publish two
+    host ports (fabric-emulator maps REST and TDS), and a dict would keep the
+    first and silently drop the second. Measured: it did.
     """
-    for path in COMPOSE_PATHS:
+    found = []
+    seen_any = False
+    for path in compose_files(name):
         try:
             text = fetch(COMPOSE_URL.format(name=name, path=path))
         except urllib.error.HTTPError as e:
             if e.code == 404:
                 continue
             raise
-        # A list, not a dict keyed by service: one container can publish two
-        # host ports (fabric-emulator maps REST and TDS), and a dict would
-        # keep the first and silently drop the second. Measured: it did.
-        return parse_ports(text)
-    return None
+        seen_any = True
+        found += parse_ports(text)
+    return found if seen_any else None
 
 
 def parse_ports(text):
