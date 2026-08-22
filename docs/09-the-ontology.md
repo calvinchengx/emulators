@@ -138,6 +138,48 @@ These are the statements the gates enforce. Each names the gate.
 | 7 | the committed map matches the registry | `render_map.py --check` |
 | 8 | the committed tables match the registry | `render_tables.py --check` |
 | 9 | no ecosystem repo is missing from the registry, and none is phantom | `check_registry.py` |
+| 10 | `ports` appears on `platform` members and nowhere else, and no host port is published by two members | `check_ontology.py` |
+| 11 | every platform's `ports` equals the host ports its published compose maps | `check_ontology.py --ports` |
+| 12 | every built member answers its tier's verb floor, read from its published Makefile | `check_verbs.py` |
+
+## `ports`: declared, then checked twice
+
+A platform's compose publishes host ports, and that is the one fact a reader
+needs before `make up` that no README states reliably. `ports` carries them
+by service name. It is declared rather than derived because deriving it
+would mean every reader of the registry fetching seven compose files; it is
+**checked** against those files on published main so the declaration cannot
+go stale, and checked **across members** so two stacks cannot claim one port.
+The second check is the one a single compose file can never make: it does
+not know what its siblings publish, and the registry is the only place that
+sees all seven at once.
+
+## The verb contract
+
+"Run the medallion and tell me whether it worked" was spelled four ways
+across seven platforms, two emulators answered no `up` at all, and leaves
+ranged from a full `up/down/run` to no Makefile. The contract is a **floor**
+per tier. A repository may answer more, and the rest of its Makefile is its
+own business; the floor is what a reader who has learned one member may
+assume of every other.
+
+| tier | answers |
+|---|---|
+| emulator | `up` `down` `logs` `doctor` `test` |
+| platform | `up` `down` `logs` `doctor` `test` `witness` |
+| leaf, sources | `test` |
+
+Two words are load-bearing. **`up`** means the published image, not a
+checkout: it is what a platform pins and what a newcomer means by "start
+it". **`witness`** takes no arguments and exits non-zero when the cell did
+not produce what it claims. It is the family's word because a witness is the
+family's unit of evidence, and because a platform that needs to be told which
+DAG must **derive** it from the product it was pointed at: a platform that
+names a product has stopped being a platform, and a test in each says so.
+
+`check_verbs.py` reads each member's Makefile from published main, the way
+every other gate here reads published state. `--local` reads the sibling
+checkouts for a pre-merge answer, and says which it read.
 
 ## What this does not model
 

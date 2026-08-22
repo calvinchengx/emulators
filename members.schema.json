@@ -37,6 +37,13 @@
         "orchestrator": {
           "enum": ["airflow3", "airflow-builtin", "notebook-pipelines", "jobs", "tasks"]
         },
+        "ports": {
+          "description": "Platforms only. The host ports the platform publishes, by compose service: what a launcher prints and what two stacks running at once must not share. Declared here, checked against the platform's published compose, and checked for collisions across members.",
+          "type": "object",
+          "minProperties": 1,
+          "propertyNames": { "pattern": "^[a-z0-9-]+$" },
+          "additionalProperties": { "type": "integer", "minimum": 1024, "maximum": 65535 }
+        },
         "role": { "type": "string" },
         "reporter": { "type": "string" },
         "conditional": { "type": "array", "items": { "type": "string" } }
@@ -60,6 +67,12 @@
           },
           "then": { "required": ["engine", "orchestrator"] },
           "else": { "properties": { "orchestrator": false } }
+        },
+        {
+          "comment": "`ports` is a platform fact: the compose that publishes them lives there. An emulator's own port is its Makefile's business and a leaf publishes nothing.",
+          "if": { "properties": { "tier": { "const": "platform" } }, "required": ["tier"] },
+          "then": { "required": ["ports"] },
+          "else": { "properties": { "ports": false } }
         },
         {
           "comment": "`engine` on an emulator is what `targets` joins on. Name-prefix matching would work today and is exactly the implicit convention the ontology exists to replace.",
