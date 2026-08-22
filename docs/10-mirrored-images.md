@@ -71,13 +71,35 @@ and not adopted**: a vendor re-tagging is their business, and silently taking
 the new bytes is the thing the record exists to prevent. Adopting it is
 `--push`, which is a decision someone makes.
 
-## The step no workflow can do
+## Whether a consumer can actually pull it
 
-A GHCR package is **private** when it is first pushed, and making it public
-needs `admin:packages`, which no workflow token carries. So a new mirror needs
-one manual flip, per package, by someone with the account. Until then every
-consumer's `make up` fails to pull, laptops included.
+Pushing a mirror and a consumer being able to use it are different questions,
+and only the second one matters.
 
-The check job reads GHCR **anonymously**, exactly as a consumer does, so it
-stays red until the packages are public. That is deliberate: a check that
-authenticated would pass while every consumer was broken.
+I expected the first push to create a **private** package, since making one
+public needs `admin:packages` and no workflow token carries that. Measured on
+[run 32551531685](https://github.com/calvinchengx/emulators/actions/runs/32551531685),
+it did not: an anonymous GHCR token fetched the manifest, HTTP 200, from a
+machine holding no `ghcr.io` credentials at all. Both packages were readable by
+anyone the moment they existed. The prediction was wrong and nothing had to be
+flipped.
+
+That is a measurement and not a guarantee, so it is checked rather than
+believed. The check job reads GHCR **with no login**, exactly as a laptop does,
+and the push job reports each package's anonymous HTTP status into the run
+summary. If a future mirror does land private, the symptom is a red check and a
+`401` in the summary, with the settings URL beside it.
+
+## What the copy proved
+
+Both mirrored indexes carry `linux/amd64,linux/arm64`, and the mirror's index
+digest is **identical to upstream's**:
+
+| image | index digest |
+|---|---|
+| `openmetadata-server:1.13.2` | `sha256:f5cdd8b6…` |
+| `openmetadata-postgresql:1.13.2` | `sha256:7c71755e…` |
+
+Identical digests are the strong form of the claim. The index was copied byte
+for byte, not rebuilt into something equivalent-looking, and the server digest
+is the same one the failing pull named in the CI log this page opens with.

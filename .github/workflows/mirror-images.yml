@@ -40,8 +40,22 @@ jobs:
     name: Every mirror matches its record
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    # AFTER the copy, never beside it. Measured on run 32551531685: both jobs
+    # started together, the copy pushed and committed the digests, and this one
+    # reported "the mirror exists but mirrors.json records no digest" about a
+    # file that had digests by the time it spoke. `always()` is what keeps this
+    # running on the schedule and on pull requests, where `push` is skipped --
+    # and on a dispatch where the copy failed, which is exactly when the state
+    # of the mirrors is worth reporting.
+    needs: [push]
+    if: ${{ always() }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          # A dispatch checks out the SHA that triggered it, which predates the
+          # digests the copy just committed. On every other trigger the ref
+          # under test is the right one.
+          ref: ${{ github.event_name == 'workflow_dispatch' && 'main' || github.ref }}
 
       # A gate nobody has watched fail is a gate nobody knows the direction of.
       # This runs first so a broken checker is never mistaken for healthy
@@ -116,20 +130,32 @@ jobs:
           git push origin HEAD:main
           git --no-pager show --stat HEAD >> "$GITHUB_STEP_SUMMARY"
 
-      # THE STEP THAT CANNOT BE AUTOMATED, said out loud rather than left to be
-      # discovered by a consumer. A new GHCR package is PRIVATE, and making one
-      # public needs `admin:packages`, which no workflow token carries.
-      - name: Say what a human still has to do
+      # WHETHER A CONSUMER CAN ACTUALLY PULL THIS, which is not the same question
+      # as whether the push worked. I predicted a first push would land PRIVATE
+      # and need a manual flip; measured on run 32551531685, it did not -- an
+      # anonymous GHCR token fetched the manifest, HTTP 200, from a machine with
+      # no ghcr.io credentials at all. So this reports rather than instructs,
+      # and the `check` job below is the thing that would actually catch it: it
+      # reads GHCR with no login, exactly as a laptop does.
+      - name: Say whether a consumer can pull what was just pushed
         run: |
           {
-            echo "### If these packages are new, they are PRIVATE"
+            echo "### Anonymous readability"
             echo
-            echo "A first push creates a private package and no workflow token can"
-            echo "change that. Until someone with the account flips them, every"
-            echo "consumer's \`make up\` will fail to pull -- including on laptops."
-            echo
-            echo '  https://github.com/users/calvinchengx/packages/container/openmetadata-server/settings'
-            echo '  https://github.com/users/calvinchengx/packages/container/openmetadata-postgresql/settings'
-            echo
-            echo "The \`check\` job reads GHCR anonymously, so it stays red until they are public."
+            for pkg in openmetadata-server openmetadata-postgresql; do
+              tok=$(curl -sS "https://ghcr.io/token?scope=repository:${{ github.repository_owner }}/$pkg:pull&service=ghcr.io" \
+                    | python3 -c 'import json,sys; print(json.load(sys.stdin)["token"])')
+              code=$(curl -sS -o /dev/null -w '%{http_code}' \
+                     -H "Authorization: Bearer $tok" \
+                     -H 'Accept: application/vnd.oci.image.index.v1+json' \
+                     "https://ghcr.io/v2/${{ github.repository_owner }}/$pkg/manifests/1.13.2")
+              if [ "$code" = "200" ]; then
+                echo "- \`$pkg\`: **public** (anonymous manifest fetch returned 200)"
+              else
+                echo "- \`$pkg\`: **NOT anonymously readable** (HTTP $code). Every consumer's"
+                echo "  \`make up\` will fail to pull, laptops included. Making a package public"
+                echo "  needs \`admin:packages\`, which no workflow token carries:"
+                echo "  https://github.com/users/${{ github.repository_owner }}/packages/container/$pkg/settings"
+              fi
+            done
           } >> "$GITHUB_STEP_SUMMARY"
