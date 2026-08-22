@@ -81,7 +81,10 @@ glance:
 
 So `fabric-platform-airflow3` runs
 `contoso-data-product-fabric-airflow3`. Neither names the other in code: the
-platform is handed a path, and the leaf pulls the core by tag.
+platform is handed a path, and the leaf pins the core by release wheel.
+
+Emulators are `<service>-emulator`; two carry an older `azure-` prefix and are
+grandfathered, see [the ontology](09-the-ontology.md#names).
 
 Two phrases capture the separation, and they appear verbatim in the repos:
 

@@ -58,6 +58,22 @@ BOM_COMPOSE = "https://raw.githubusercontent.com/calvinchengx/azure-emulators/ma
 # volume name cannot be read as membership.
 BOM_IMAGE = re.compile(r"image:\s*ghcr\.io/calvinchengx/([a-z0-9-]+):")
 
+NAME_EMULATOR = re.compile(r"^[a-z0-9]+-emulator$")
+# The rule is `<service>-emulator`. These two were named before it existed
+# and keep their names: the cost of a rename is every pin, image reference
+# and link, and the benefit is a prefix a reader does not need.
+GRANDFATHERED = {"azure-keyvault-emulator", "azure-apim-emulator"}
+
+
+def expected_name(m):
+    """The name a leaf or platform must have, from its cell. None otherwise."""
+    if m["tier"] == "leaf" and "engine" in m and "orchestrator" in m:
+        return f"contoso-data-product-{m['engine']}-{m['orchestrator']}"
+    if m["tier"] == "platform" and "engine" in m and "orchestrator" in m:
+        return f"{m['engine']}-platform-{m['orchestrator']}"
+    return None
+
+
 def fields_for(m):
     """Which of the optional fields this member must carry, and only these.
 
@@ -134,6 +150,19 @@ def structural(members):
             bad.append(f"cell {cell[0]} / {cell[1]}: platform {halves['platform']} has no leaf")
         if "platform" not in halves:
             bad.append(f"cell {cell[0]} / {cell[1]}: leaf {halves['leaf']} has no platform")
+
+    # 13: a name follows its tier's pattern. Leaf and platform names are
+    # DERIVED from (engine, orchestrator), so a repo named for one cell and
+    # declared as another is caught here rather than read as a typo in prose.
+    # Emulators are `<service>-emulator`; the two `azure-` prefixes predate
+    # the rule and are grandfathered by name, because renaming a published
+    # image, its pins and every link to it buys nothing a reader needs.
+    for m in members:
+        want = expected_name(m)
+        if want and m["name"] != want:
+            bad.append(f"{m['name']}: a {m['tier']} for ({m.get('engine')}, {m.get('orchestrator')}) is named `{want}`")
+        if m["tier"] == "emulator" and not NAME_EMULATOR.match(m["name"]) and m["name"] not in GRANDFATHERED:
+            bad.append(f"{m['name']}: an emulator is `<service>-emulator`")
 
     # 10: no host port is published by two members. Two stacks that share a
     # port cannot run at once, and the failure is `bind: address already in
@@ -295,6 +324,14 @@ def self_test():
         ("a leaf carrying ports",
          [{"name": "l", "tier": "leaf", "status": "built", "ci": "required",
            "engine": "fabric", "orchestrator": "jobs", "ports": {"x": 18080}}]),
+        ("a leaf named for a different cell than it declares",
+         [{"name": "contoso-data-product-fabric-jobs", "tier": "leaf", "status": "built", "ci": "required",
+           "engine": "snowflake", "orchestrator": "jobs"},
+          {"name": "snowflake-platform-jobs", "tier": "platform", "status": "built", "ci": "required",
+           "engine": "snowflake", "orchestrator": "jobs", "ports": {"x": 18080}}]),
+        ("an emulator not named <service>-emulator",
+         [{"name": "emulator-for-foo", "tier": "emulator", "status": "built", "ci": "required",
+           "kind": "gateway", "bom": False}]),
         ("two platforms publishing one host port",
          [{"name": "p", "tier": "platform", "status": "built", "ci": "required",
            "engine": "fabric", "orchestrator": "jobs", "ports": {"airflow": 18080}},
