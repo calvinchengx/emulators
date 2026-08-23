@@ -29,7 +29,12 @@ export default defineConfig({
           href: 'https://github.com/calvinchengx/emulators',
         },
       ],
-      components: { Head: './src/components/Head.astro' },
+      components: {
+        Head: './src/components/Head.astro',
+        // A back-link to the landing page beside the site title. The component
+        // explains why it cannot live in the header icon row or the sidebar.
+        SiteTitle: './src/components/SiteTitle.astro',
+      },
       sidebar: [
         {
           label: 'Start here',
