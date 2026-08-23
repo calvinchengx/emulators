@@ -157,6 +157,20 @@ jobs:
           ./scripts/check_workflow_paths.py --self-test
           ./scripts/check_workflow_paths.py
 
+      # EVERY MEMBER'S WORKFLOWS PARSE, AND EVERY JOB IS SCOPED. Both halves
+      # come from failures seen in one evening: duplicate keys left three of
+      # arm-emulator's workflows and the BOM's own chain gate running NOTHING,
+      # with no failing check to point at, and CodeQL had
+      # `actions/missing-workflow-permissions` open on seven jobs across six
+      # repos. `yaml.safe_load` sees neither -- it keeps the last duplicate --
+      # so the loader in this script refuses one, as GitHub does.
+      - name: Every member's workflows parse, and every job is scoped
+        env:
+          GH_TOKEN: ${{ secrets.FAMILY_CI_TOKEN || github.token }}
+        run: |
+          uv run --no-project --with pyyaml ./scripts/check_workflow_hygiene.py --self-test
+          uv run --no-project --with pyyaml ./scripts/check_workflow_hygiene.py
+
       - name: Self-test the gate before trusting it
         env:
           GH_TOKEN: ${{ secrets.FAMILY_CI_TOKEN || github.token }}
