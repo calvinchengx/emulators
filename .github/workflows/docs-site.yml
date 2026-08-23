@@ -73,6 +73,12 @@ jobs:
           set -euo pipefail
           mkdir -p _site
           cp site/index.html _site/index.html
+          # llms.txt at the SITE root, which is where the convention says to
+          # look. The domain root would cover all eleven sites at once and is
+          # not available: it is served by a deployment last modified in April
+          # 2012, Pages is not enabled on calvinchengx.github.io, and that
+          # repository's Docusaurus config targets a different domain.
+          cp site/llms.txt _site/llms.txt
           cp docs/map.svg docs/map-dark.svg _site/
           cp -R website/dist _site/docs
           ./scripts/site_data.py --out _site

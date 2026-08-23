@@ -1,0 +1,79 @@
+# Azure emulator family
+
+> Clean-room emulators of the control planes nobody else emulates (Entra ID, ARM with RBAC, Key Vault, API Management) and of 3 analytics engines (Fabric, Databricks, Snowflake), so an AI coding agent can build and PROVE Azure-shaped work on a laptop instead of in a tenant. The same code then points at the real service by changing environment variables.
+
+28 repositories. 7 emulators, each with a graded parity ledger whose green rows name the test that proves them. One reference data product built 7 ways across 3 engines, every cell reproducing the same figures.
+
+Nothing here is diffed against real Azure. Green means witnessed locally against real clients, which is a strong claim and a different one.
+
+## The emulators
+
+Each emulates one service, grades itself in a parity ledger, and binds every green claim to a named witness.
+
+- [arm-emulator](https://calvinchengx.github.io/arm-emulator/): ARM control plane + RBAC
+- [azure-apim-emulator](https://calvinchengx.github.io/azure-apim-emulator/): API Management
+- [azure-keyvault-emulator](https://calvinchengx.github.io/azure-keyvault-emulator/): Key Vault data plane
+- [databricks-emulator](https://calvinchengx.github.io/databricks-emulator/): Databricks workspace REST
+- [entra-emulator](https://calvinchengx.github.io/entra-emulator/): Entra ID, the STS
+- [fabric-emulator](https://calvinchengx.github.io/fabric-emulator/): Microsoft Fabric + OneLake
+- [snowflake-emulator](https://calvinchengx.github.io/snowflake-emulator/): Snowflake account, adjacent to the family
+
+## The certified set
+
+The bill of materials: pinned versions, the family compose, and a chain test that runs the whole set together.
+
+- [azure-emulators](https://calvinchengx.github.io/azure-emulators/): The BOM, the family compose, the chain test
+
+## The data product, defined once
+
+Transforms, ODCS contracts and the expected numbers every cell must reproduce.
+
+- [contoso-data-product](https://github.com/calvinchengx/contoso-data-product): Transforms, contracts, expected numbers
+
+## The source systems
+
+Four vendor systems every cell ingests from, so a difference between cells is never a difference in fixtures.
+
+- [contoso-sources](https://github.com/calvinchengx/contoso-sources): The four vendor systems, shared by every platform
+
+## The product, per cell
+
+One repository per (engine, orchestrator) pair, carrying only that platform's idiom.
+
+- [contoso-data-product-databricks-airflow3](https://github.com/calvinchengx/contoso-data-product-databricks-airflow3): databricks / airflow3
+- [contoso-data-product-databricks-jobs](https://github.com/calvinchengx/contoso-data-product-databricks-jobs): databricks / jobs
+- [contoso-data-product-fabric-airflow-builtin](https://github.com/calvinchengx/contoso-data-product-fabric-airflow-builtin): fabric / airflow-builtin
+- [contoso-data-product-fabric-airflow3](https://github.com/calvinchengx/contoso-data-product-fabric-airflow3): fabric / airflow3
+- [contoso-data-product-fabric-notebook-pipelines](https://github.com/calvinchengx/contoso-data-product-fabric-notebook-pipelines): fabric / notebook-pipelines
+- [contoso-data-product-snowflake-airflow3](https://github.com/calvinchengx/contoso-data-product-snowflake-airflow3): snowflake / airflow3
+- [contoso-data-product-snowflake-tasks](https://github.com/calvinchengx/contoso-data-product-snowflake-tasks): snowflake / tasks
+
+## The platform, per cell
+
+Compose, pins and provisioning for one cell. Paired one-to-one with a leaf.
+
+- [databricks-platform-airflow3](https://github.com/calvinchengx/databricks-platform-airflow3): databricks / airflow3
+- [databricks-platform-jobs](https://github.com/calvinchengx/databricks-platform-jobs): databricks / jobs
+- [fabric-platform-airflow-builtin](https://github.com/calvinchengx/fabric-platform-airflow-builtin): fabric / airflow-builtin
+- [fabric-platform-airflow3](https://github.com/calvinchengx/fabric-platform-airflow3): fabric / airflow3
+- [fabric-platform-notebook-pipelines](https://github.com/calvinchengx/fabric-platform-notebook-pipelines): fabric / notebook-pipelines
+- [snowflake-platform-airflow3](https://github.com/calvinchengx/snowflake-platform-airflow3): snowflake / airflow3
+- [snowflake-platform-tasks](https://github.com/calvinchengx/snowflake-platform-tasks): snowflake / tasks
+
+## Built on the family
+
+Not part of the family: things built with it, each running locally against these emulators and unchanged against real Azure.
+
+- [data-agent-service](https://calvinchengx.github.io/data-agent-service/docs/): Governed NL questions over the estate, answered as the asking user
+- [data-agent-voice](https://calvinchengx.github.io/data-agent-voice/docs/): The Analyst Line: a voice front end over data-agent-service
+- [sqlglot-go](https://github.com/calvinchengx/sqlglot-go): sqlglot in Go, verified against the Python reference; the read-only SQL guard
+
+## This directory
+
+The registry every list above is generated from, plus the ecosystem docs and the CI sweep.
+
+- [emulators](https://calvinchengx.github.io/emulators/): This repo: the ecosystem directory and docs site
+
+## Optional
+
+- [Every repository on GitHub](https://github.com/calvinchengx): source for all 28, including the 17 with no published documentation site.

@@ -33,7 +33,7 @@
     {"name": "snowflake-emulator",         "tier": "emulator",    "status": "built", "ci": "required", "engine": "snowflake", "kind": "engine",        "bom": false, "docs": "https://calvinchengx.github.io/snowflake-emulator/", "role": "Snowflake account, adjacent to the family"},
 
     {"name": "azure-emulators",            "tier": "composition", "status": "built", "ci": "required", "docs": "https://calvinchengx.github.io/azure-emulators/", "role": "The BOM, the family compose, the chain test"},
-    {"name": "emulators",                  "tier": "hub",         "status": "built", "ci": "required", "reporter": "family-ci.yml", "role": "This repo: the ecosystem directory and docs site"},
+    {"name": "emulators",                  "tier": "hub",         "status": "built", "ci": "required", "reporter": "family-ci.yml", "docs": "https://calvinchengx.github.io/emulators/", "role": "This repo: the ecosystem directory and docs site"},
 
     {"name": "data-agent-service",             "tier": "application", "status": "built", "ci": "required", "docs": "https://calvinchengx.github.io/data-agent-service/docs/", "role": "Governed NL questions over the estate, answered as the asking user"},
     {"name": "data-agent-voice",               "tier": "application", "status": "built", "ci": "required", "docs": "https://calvinchengx.github.io/data-agent-voice/docs/", "role": "The Analyst Line: a voice front end over data-agent-service"},
