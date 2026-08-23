@@ -70,6 +70,25 @@ def table(idx, short):
     return "\n".join(rows)
 
 
+SITE = "https://calvinchengx.github.io"
+
+
+def site_base() -> str:
+    """The published base path, from the Astro config that decides it.
+
+    One source. Restating it here is how the README ends up pointing at a route
+    the site does not serve.
+    """
+    config = (ROOT / "website" / "astro.config.mjs").read_text(encoding="utf-8")
+    m = re.search(r"^\s*base:\s*'([^']+)'", config, re.M)
+    if not m:
+        raise SystemExit(
+            "render_tables: website/astro.config.mjs declares no `base`, so the "
+            "README's site link cannot be built. Refusing to guess it."
+        )
+    return m.group(1)
+
+
 def legend(members):
     no_ci = [m["name"] for m in members if m["ci"] == "missing"]
     out = ["", "✅ built · ⬜ reserved, holding a README and a LICENSE", ""]
@@ -110,9 +129,17 @@ def main():
             return 2
         want = block(members, idx, short)
         # The README links to the site page by URL, /docs links by relative path.
+        #
+        # THE BASE IS READ, NOT WRITTEN HERE. It was the literal
+        # `/emulators/08-ci-status/` until the landing page took the root and
+        # Starlight moved under `/docs/`, at which point this would have emitted
+        # a 404 -- and silently, because the line only renders when some member
+        # has `ci: missing`, which is nobody today. A latent wrong link is worse
+        # than a live one: nothing shows it until the day it matters.
         if short:
-            want = want.replace("(08-ci-status.md)",
-                                "(https://calvinchengx.github.io/emulators/08-ci-status/)")
+            want = want.replace(
+                "(08-ci-status.md)", f"({SITE.rstrip('/')}{site_base()}08-ci-status/)"
+            )
         new = pattern.sub(lambda _: want, src)
         if new == src:
             continue
