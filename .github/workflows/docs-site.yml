@@ -4,8 +4,12 @@ on:
   push:
     branches: [main]
     paths:
+      - 'site/**'
       - 'docs/**'
       - 'website/**'
+      # The landing page's numbers are generated from these two.
+      - 'members.json'
+      - 'scripts/site_data.py'
       - 'pnpm-lock.yaml'
       - 'pnpm-workspace.yaml'
       - 'package.json'
@@ -15,8 +19,11 @@ on:
   # is skipped below.
   pull_request:
     paths:
+      - 'site/**'
       - 'docs/**'
       - 'website/**'
+      - 'members.json'
+      - 'scripts/site_data.py'
       - 'pnpm-lock.yaml'
       - 'pnpm-workspace.yaml'
       - 'package.json'
@@ -54,10 +61,48 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter emulators-docs build
 
+      # THE LANDING PAGE ABOVE, THE DOCUMENTATION BELOW, the same shape
+      # data-agent-service and data-agent-voice already publish. The root is
+      # site/index.html and Starlight is mounted at /docs/.
+      #
+      # The map is copied rather than committed twice: render_map.py owns it,
+      # `--check` owns whether it is current, and the landing page embeds both
+      # themes with <picture>.
+      - name: Assemble the site
+        run: |
+          set -euo pipefail
+          mkdir -p _site
+          cp site/index.html _site/index.html
+          cp docs/map.svg docs/map-dark.svg _site/
+          cp -R website/dist _site/docs
+          ./scripts/site_data.py --out _site
+
+      # EVERY SLOT ON THE LANDING PAGE IS FILLED, checked here rather than
+      # discovered by a reader. The page ships em dashes and fills them from
+      # site-data.json at load time, so a key the generator stopped emitting
+      # would show as a dash on the published page and nowhere else.
+      - name: Every number the landing page asks for exists
+        run: |
+          python3 - <<'PY'
+          import json, re, sys, pathlib
+          page = pathlib.Path("_site/index.html").read_text(encoding="utf-8")
+          data = json.loads(pathlib.Path("_site/site-data.json").read_text(encoding="utf-8"))
+          wanted = set(re.findall(r'data-d="(\w+)"', page))
+          ev = set(re.findall(r'data-ev="(\w+)"', page))
+          missing = sorted(wanted - data.keys())
+          missing_ev = sorted(ev - set(data.get("evidence", {})))
+          if missing or missing_ev:
+              print(f"::error::the landing page asks for {missing + missing_ev} "
+                    f"and site_data.py does not emit it; those slots would publish "
+                    f"as em dashes")
+              sys.exit(1)
+          print(f"landing page: {len(wanted)} counts + {len(ev)} ledgers, all present")
+          PY
+
       - uses: actions/upload-pages-artifact@v5
         if: github.event_name != 'pull_request'
         with:
-          path: website/dist
+          path: _site
 
   deploy:
     name: Deploy to GitHub Pages

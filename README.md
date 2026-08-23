@@ -3,7 +3,7 @@
 [![Docs site](https://github.com/calvinchengx/emulators/actions/workflows/docs-site.yml/badge.svg)](https://github.com/calvinchengx/emulators/actions/workflows/docs-site.yml)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 
-**📖 [calvinchengx.github.io/emulators](https://calvinchengx.github.io/emulators/)**: the full map, the argument, and how to start.
+**📖 [calvinchengx.github.io/emulators](https://calvinchengx.github.io/emulators/)**: the argument, the evidence and an honest status table. The full documentation is at [/emulators/docs/](https://calvinchengx.github.io/emulators/docs/).
 
 The front door to the emulator ecosystem: emulators that make an AI coding
 agent viable as the builder of Azure-shaped applications and data products.

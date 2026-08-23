@@ -98,10 +98,25 @@ def text(x, y, s, fill, size=13, weight=400, anchor="start"):
             f'{esc(s)}</text>')
 
 
+# The tiers this map DRAWS. The registry is wider than the diagram: an
+# `application` consumes the family rather than composing it, so it has no
+# place in a picture whose whole grammar is "a cell is a leaf plus a platform
+# under an engine". Naming the drawn set here keeps the caption honest --
+# `len(members)` said 28 the moment three applications were registered, over an
+# image that still showed 25, which is a count asserting something the picture
+# does not.
+DRAWN = ("core", "sources", "leaf", "platform", "emulator", "composition", "hub")
+
+
+def drawn(members):
+    return sum(1 for m in members if m["tier"] in DRAWN)
+
+
 def render(members, theme_name):
     t = THEMES[theme_name]
     out = []
 
+    members = [m for m in members if m["tier"] in DRAWN]
     by_tier = defaultdict(list)
     for m in members:
         by_tier[m["tier"]].append(m)
@@ -225,12 +240,14 @@ def main():
         if stale:
             print(f"out of date: {', '.join(stale)}. Run ./scripts/render_map.py")
             return 1
-        print(f"map: {len(members)} members, both themes match the registry")
+        print(f"map: {drawn(members)} of {len(members)} members drawn, "
+              f"both themes match the registry")
         return 0
 
     for p, want in wanted.items():
         p.write_text(want, encoding="utf-8")
-    print(f"map: wrote {LIGHT.name} and {DARK.name} from {len(members)} members")
+    print(f"map: wrote {LIGHT.name} and {DARK.name}, "
+          f"{drawn(members)} of {len(members)} members drawn")
     return 0
 
 

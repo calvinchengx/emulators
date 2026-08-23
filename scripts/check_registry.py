@@ -30,8 +30,21 @@ REGISTRY = Path(__file__).resolve().parent.parent / "members.json"
 # A repo is ecosystem-shaped if its name contains one of these, or is an exact
 # match below. Substrings, so `fabric-platform-airflow3` and `arm-emulator`
 # both land without enumerating every cell.
-PATTERNS = ("emulator", "contoso", "-platform-")
-EXACT = {"azure-emulators", "emulators"}
+PATTERNS = ("emulator", "contoso", "-platform-", "data-agent-")
+EXACT = {"azure-emulators", "emulators", "sqlglot-go"}
+
+# WHY THE LIST GREW, and the lesson in it. The three patterns above encode the
+# family's naming conventions as of the day the cells were built, and for a
+# while that WAS the ecosystem. Then `data-agent-service`, `data-agent-voice`
+# and `sqlglot-go` shipped -- three public repos, one of them the most
+# user-facing thing here -- and this check reported "the registry is complete"
+# every thirty minutes, because a convention-shaped guard is blind to exactly
+# the repos that did not follow the convention.
+#
+# So the completeness check has its own completeness problem, and it cannot
+# close it by looking harder at names. When a new repo joins the ecosystem
+# under a name nothing here predicts, ADD IT HERE as well as to the registry;
+# a green sweep is not evidence that nothing is missing.
 
 # Repos that match the shape but are not members. Each needs a reason, so a
 # future reader can tell a deliberate exclusion from a forgotten one.

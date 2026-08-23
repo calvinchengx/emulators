@@ -21,7 +21,7 @@
       "properties": {
         "name": { "type": "string", "pattern": "^[a-z0-9-]+$" },
         "tier": {
-          "enum": ["emulator", "composition", "hub", "sources", "core", "leaf", "platform"]
+          "enum": ["emulator", "composition", "hub", "sources", "core", "leaf", "platform", "application"]
         },
         "status": { "enum": ["built", "reserved"] },
         "ci": { "enum": ["required", "missing", "none"] },
@@ -43,6 +43,11 @@
           "minProperties": 1,
           "propertyNames": { "pattern": "^[a-z0-9-]+$" },
           "additionalProperties": { "type": "integer", "minimum": 1024, "maximum": 65535 }
+        },
+        "docs": {
+          "type": "string",
+          "format": "uri",
+          "description": "The member's own documentation site. Omitted when it has none, so a reader is sent to the repository rather than to a 404."
         },
         "role": { "type": "string" },
         "reporter": { "type": "string" },

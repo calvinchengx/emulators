@@ -24,7 +24,7 @@ gate named against it is a fact nobody is checking.
 
 ## Entities
 
-Every member has a `tier`. There are seven, and the set is closed.
+Every member has a `tier`. There are eight, and the set is closed.
 
 | tier | what it is | how many |
 |---|---|---|
@@ -35,6 +35,23 @@ Every member has a `tier`. There are seven, and the set is closed.
 | `core` | the data product defined once: SQL, contracts, numbers | 1 |
 | `leaf` | one cell's product half | 7 |
 | `platform` | one cell's infrastructure half | 7 |
+| `application` | something built ON the family rather than part of it | 3 |
+
+`application` is the newest and the one that says most about this file. The
+other seven tiers describe how the family is ASSEMBLED, and every one of them
+is drawn on the map. An application CONSUMES the assembly -- `data-agent-service`
+answers questions over the estate the cells build, `data-agent-voice` speaks
+over that service, `sqlglot-go` is the guard one of them runs -- so it carries
+no `engine`, no `orchestrator` and no `kind`, and the map does not draw it.
+
+**It also existed for weeks before it was a tier.** Three public repositories
+were part of the ecosystem while `check_registry.py` reported the registry
+complete every thirty minutes, because that check recognises a member by its
+NAME (`*-emulator`, `contoso-*`, `*-platform-*`) and none of those three
+followed a convention written before they existed. A completeness check keyed
+on a convention is blind to exactly the members that broke it, which is the
+same shape as the defects the rest of this document exists to prevent, applied
+to the guard rather than to the data.
 
 ### Two axes
 
