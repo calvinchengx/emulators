@@ -13,7 +13,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 const REPO = join(here, '..', '..');
 const DOCS_SRC = join(REPO, 'docs');
 const OUT = join(here, '..', 'src', 'content', 'docs');
-export const BASE = '/emulators/';
+export const BASE = '/emulators/docs/';
 
 // Docs are `NN-name.md` chapters.
 const DOC_RE = /^\d{2}-.*\.md$/;
@@ -107,9 +107,16 @@ function writeIndex() {
 ` +
       `- [Getting started](06-getting-started.md): three doors in
 ` +
+      `- [Mirrored images](10-mirrored-images.md): what the family pulls, and from where
+` +
       `- [CI status](08-ci-status.md): is the whole ecosystem green
 ` +
       `- [Roadmap](07-roadmap.md): what earns a new emulator its place
+
+` +
+      `The [landing page](/emulators/) above these docs carries the argument, the ` +
+      `evidence numbers and an honest status table, all generated from the same ` +
+      `registry and ledgers these pages read.
 `,
   );
   const frontmatter =

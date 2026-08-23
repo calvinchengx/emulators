@@ -24,17 +24,20 @@
   ],
   "owner": "calvinchengx",
   "members": [
-    {"name": "entra-emulator",             "tier": "emulator",    "status": "built", "ci": "required", "kind": "identity",      "bom": true, "role": "Entra ID, the STS"},
-    {"name": "arm-emulator",               "tier": "emulator",    "status": "built", "ci": "required", "kind": "control-plane", "bom": true, "role": "ARM control plane + RBAC"},
-    {"name": "azure-keyvault-emulator",    "tier": "emulator",    "status": "built", "ci": "required", "kind": "secrets",       "bom": true, "role": "Key Vault data plane"},
-    {"name": "azure-apim-emulator",        "tier": "emulator",    "status": "built", "ci": "required", "kind": "gateway",       "bom": true, "role": "API Management"},
-    {"name": "fabric-emulator",            "tier": "emulator",    "status": "built", "ci": "required", "engine": "fabric", "kind": "engine",        "bom": true, "role": "Microsoft Fabric + OneLake"},
-    {"name": "databricks-emulator",        "tier": "emulator",    "status": "built", "ci": "required", "engine": "databricks", "kind": "engine",        "bom": true, "role": "Databricks workspace REST"},
-    {"name": "snowflake-emulator",         "tier": "emulator",    "status": "built", "ci": "required", "engine": "snowflake", "kind": "engine",        "bom": false, "role": "Snowflake account, adjacent to the family"},
+    {"name": "entra-emulator",             "tier": "emulator",    "status": "built", "ci": "required", "kind": "identity",      "bom": true, "docs": "https://calvinchengx.github.io/entra-emulator/", "role": "Entra ID, the STS"},
+    {"name": "arm-emulator",               "tier": "emulator",    "status": "built", "ci": "required", "kind": "control-plane", "bom": true, "docs": "https://calvinchengx.github.io/arm-emulator/", "role": "ARM control plane + RBAC"},
+    {"name": "azure-keyvault-emulator",    "tier": "emulator",    "status": "built", "ci": "required", "kind": "secrets",       "bom": true, "docs": "https://calvinchengx.github.io/azure-keyvault-emulator/", "role": "Key Vault data plane"},
+    {"name": "azure-apim-emulator",        "tier": "emulator",    "status": "built", "ci": "required", "kind": "gateway",       "bom": true, "docs": "https://calvinchengx.github.io/azure-apim-emulator/", "role": "API Management"},
+    {"name": "fabric-emulator",            "tier": "emulator",    "status": "built", "ci": "required", "engine": "fabric", "kind": "engine",        "bom": true, "docs": "https://calvinchengx.github.io/fabric-emulator/", "role": "Microsoft Fabric + OneLake"},
+    {"name": "databricks-emulator",        "tier": "emulator",    "status": "built", "ci": "required", "engine": "databricks", "kind": "engine",        "bom": true, "docs": "https://calvinchengx.github.io/databricks-emulator/", "role": "Databricks workspace REST"},
+    {"name": "snowflake-emulator",         "tier": "emulator",    "status": "built", "ci": "required", "engine": "snowflake", "kind": "engine",        "bom": false, "docs": "https://calvinchengx.github.io/snowflake-emulator/", "role": "Snowflake account, adjacent to the family"},
 
-    {"name": "azure-emulators",            "tier": "composition", "status": "built", "ci": "required", "role": "The BOM, the family compose, the chain test"},
+    {"name": "azure-emulators",            "tier": "composition", "status": "built", "ci": "required", "docs": "https://calvinchengx.github.io/azure-emulators/", "role": "The BOM, the family compose, the chain test"},
     {"name": "emulators",                  "tier": "hub",         "status": "built", "ci": "required", "reporter": "family-ci.yml", "role": "This repo: the ecosystem directory and docs site"},
 
+    {"name": "data-agent-service",             "tier": "application", "status": "built", "ci": "required", "docs": "https://calvinchengx.github.io/data-agent-service/docs/", "role": "Governed NL questions over the estate, answered as the asking user"},
+    {"name": "data-agent-voice",               "tier": "application", "status": "built", "ci": "required", "docs": "https://calvinchengx.github.io/data-agent-voice/docs/", "role": "The Analyst Line: a voice front end over data-agent-service"},
+    {"name": "sqlglot-go",                     "tier": "application", "status": "built", "ci": "required", "role": "sqlglot in Go, verified against the Python reference; the read-only SQL guard"},
     {"name": "contoso-sources",            "tier": "sources",     "status": "built", "ci": "required",  "role": "The four vendor systems, shared by every platform"},
     {"name": "contoso-data-product",       "tier": "core",        "status": "built", "ci": "required", "role": "Transforms, contracts, expected numbers"},
 

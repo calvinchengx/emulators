@@ -3,13 +3,19 @@ import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 import { remarkMermaid } from './plugins/remark-mermaid.mjs';
 
-// Published to GitHub Pages under /emulators/, so every generated link needs
-// that base. Docs content is generated from /docs by scripts/sync-docs.mjs
-// before build. /docs stays the single source of truth, and its files keep
-// working as plain Markdown on GitHub.
+// Published to GitHub Pages under /emulators/docs/, so every generated link
+// needs that base. Docs content is generated from /docs by
+// scripts/sync-docs.mjs before build. /docs stays the single source of truth,
+// and its files keep working as plain Markdown on GitHub.
+//
+// UNDER /docs/, NOT AT THE ROOT, since site/index.html took the root. That is
+// the shape the sibling repositories already use (data-agent-service,
+// data-agent-voice): a landing page above, the documentation below. Checked
+// before moving: nothing anywhere links to a `/emulators/<slug>/` deep URL, so
+// the move breaks no inbound link, and the root itself keeps working.
 export default defineConfig({
   site: 'https://calvinchengx.github.io',
-  base: '/emulators/',
+  base: '/emulators/docs/',
   markdown: { remarkPlugins: [remarkMermaid] },
   integrations: [
     starlight({

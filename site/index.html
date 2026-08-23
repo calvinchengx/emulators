@@ -1,0 +1,531 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Emulators: prove Azure-shaped work on a laptop</title>
+<meta name="description" content="Clean-room emulators of Entra ID, ARM with RBAC, Key Vault, API Management, Fabric, Databricks and Snowflake, plus one reference data product proven on three engines. Built so an AI agent can prove its work without a tenant.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>◇</text></svg>">
+<style>
+:root{
+  --bg:#fbfbfa; --panel:#fff; --ink:#16181d; --muted:#5c6270; --line:#e3e5e9;
+  --accent:#2d5bd7; --accent-soft:#e8edfc;
+  --ship:#0f6f6b; --ship-bg:#e6f2f1;
+  --wip:#8a5a00; --wip-bg:#fdf3e0;
+  --plan:#5c6270; --plan-bg:#eef0f3;
+  --code:#f4f5f7; --diagram-line:#828c9c; --diagram-fill:#fff;
+  --radius:14px;
+  --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0f1115; --panel:#151920; --ink:#e8eaee; --muted:#98a0ae; --line:#262b34;
+    --accent:#7fa2ff; --accent-soft:#161d33;
+    --ship:#4fd1c5; --ship-bg:#12292b;
+    --wip:#e0a94a; --wip-bg:#2a2114;
+    --plan:#98a0ae; --plan-bg:#1c212a;
+    --code:#11151b; --diagram-line:#5a6575; --diagram-fill:#1c222c;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);
+  line-height:1.65;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1000px;margin:0 auto;padding:0 24px}
+a{color:var(--accent)}
+code{font-family:var(--mono);font-size:.9em;background:var(--code);padding:.15em .4em;border-radius:5px}
+pre{background:var(--code);border:1px solid var(--line);border-radius:var(--radius);
+  padding:18px 20px;overflow-x:auto;font-family:var(--mono);font-size:.88rem;line-height:1.55}
+pre code{background:none;padding:0}
+h1,h2,h3{line-height:1.25;letter-spacing:-.02em}
+h2{font-size:1.7rem;margin:0 0 8px}
+.sec{padding:60px 0;border-top:1px solid var(--line)}
+.sec>.wrap>p.lede{color:var(--muted);font-size:1.05rem;max-width:70ch;margin:0 0 32px}
+
+/* hero */
+.hero{padding:76px 0 64px}
+.eyebrow{font-family:var(--mono);font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--accent);margin:0 0 18px}
+.hero h1{font-size:clamp(2.1rem,5.2vw,3.4rem);margin:0 0 20px;max-width:24ch}
+.hero p{font-size:1.15rem;color:var(--muted);max-width:64ch;margin:0 0 14px}
+.hero .claim{color:var(--ink);font-weight:600;border-left:3px solid var(--accent);
+  padding-left:16px;margin-top:28px;max-width:62ch}
+.cta{display:flex;gap:12px;flex-wrap:wrap;margin-top:32px}
+.btn{display:inline-block;padding:11px 20px;border-radius:10px;text-decoration:none;
+  font-weight:600;font-size:.94rem;border:1px solid var(--line)}
+.btn.primary{background:var(--accent);color:var(--bg);border-color:var(--accent)}
+.btn.ghost{color:var(--ink)}
+.release-pill{display:inline-flex;align-items:center;gap:9px;margin:0 0 20px;padding:6px 14px;
+  border:1px solid var(--line);border-radius:999px;background:var(--panel);
+  text-decoration:none;color:var(--muted);font-size:.86rem}
+.release-pill span{background:var(--accent-soft);color:var(--accent);font-weight:700;
+  border-radius:999px;padding:2px 9px;font-size:.78rem}
+
+/* stats */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;
+  background:var(--line);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;margin-top:44px}
+.stat{background:var(--panel);padding:20px}
+.stat b{display:block;font-size:1.65rem;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+/* DIRECT child only. `.stat span` also matched the data slots inside <b>,
+   so `86` and `100` rendered at label size beside a full-size `%`. */
+.stat>span{color:var(--muted);font-size:.83rem}
+
+/* cards */
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px}
+/* A column, so the evidence line and the link sit on the baseline of the
+   row rather than wherever that card's prose happened to end. */
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+  padding:24px;display:flex;flex-direction:column}
+.card .ev{margin-top:auto}
+.card p.link{margin:12px 0 0}
+.card h3{font-size:1.08rem;margin:0 0 10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.card h3 code{background:none;padding:0;font-size:1em}
+.card p{margin:0 0 12px;color:var(--muted);font-size:.94rem}
+.card .ev{font-family:var(--mono);font-size:.78rem;color:var(--ink);background:var(--code);
+  border-radius:8px;padding:9px 12px;display:block}
+.card a.more{font-size:.86rem;text-decoration:none;font-weight:600}
+.tag{font-size:.68rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
+  padding:3px 9px;border-radius:999px;white-space:nowrap}
+.t-ship{color:var(--ship);background:var(--ship-bg)}
+.t-wip{color:var(--wip);background:var(--wip-bg)}
+.t-plan{color:var(--plan);background:var(--plan-bg)}
+
+/* table */
+.tbl{width:100%;border-collapse:collapse;font-size:.92rem;margin-top:8px}
+.tbl th,.tbl td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+.tbl th{font-size:.75rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:600}
+.tbl td:first-child{font-weight:600}
+.scroll{overflow-x:auto}
+
+figure{margin:0}
+figcaption{color:var(--muted);font-size:.85rem;margin-top:12px;text-align:center}
+svg .lbl{font:600 12px var(--font);fill:var(--ink)}
+svg .sub{font:11px var(--mono);fill:var(--muted)}
+svg .bx{fill:var(--diagram-fill);stroke:var(--diagram-line);stroke-width:1.5}
+svg .ac{fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5}
+svg .ar{stroke:var(--diagram-line);stroke-width:1.5;fill:none}
+
+.note{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--accent);
+  border-radius:0 var(--radius) var(--radius) 0;padding:20px 24px;margin-top:28px}
+.note b{display:block;margin-bottom:6px}
+.note p{margin:0;color:var(--muted);font-size:.94rem}
+footer{padding:44px 0 60px;border-top:1px solid var(--line);color:var(--muted);font-size:.88rem}
+footer a{text-decoration:none}
+footer p{max-width:80ch}
+
+/* The docs are a click away from every scroll position, not only the hero. */
+.topnav{position:sticky;top:0;z-index:50;background:color-mix(in srgb,var(--bg) 88%,transparent);
+  backdrop-filter:saturate(1.4) blur(8px);border-bottom:1px solid var(--line)}
+.topnav .wrap{display:flex;align-items:center;gap:18px;height:56px}
+.topnav .brand{font-family:var(--mono);font-size:.82rem;letter-spacing:.04em;
+  text-transform:uppercase;color:var(--ink);text-decoration:none;font-weight:600}
+.topnav .links{margin-left:auto;display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+.topnav .links a{color:var(--muted);text-decoration:none;font-size:.92rem}
+.topnav .links a:hover{color:var(--accent)}
+.topnav .links a.strong{color:var(--accent);font-weight:600}
+@media (max-width:640px){.topnav .links a:not(.strong){display:none}}
+
+/* The generated map: wide and detailed. Scrolls in its own box rather than
+   shrinking to illegibility or pushing the page sideways. */
+.mapbox{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);
+  background:var(--panel);padding:18px}
+.mapbox img{display:block;min-width:44rem;width:100%}
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="wrap">
+    <a class="brand" href="./">Emulators</a>
+    <div class="links">
+      <a href="#problem">Why</a>
+      <a href="#family">The family</a>
+      <a href="#status">Honest status</a>
+      <a href="#start">Start</a>
+      <a href="https://github.com/calvinchengx/emulators">GitHub</a>
+      <a class="strong" href="docs/">Documentation &rarr;</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <p class="eyebrow">The emulator family</p>
+    <a class="release-pill" href="docs/01-the-map/"><span data-d="repos">&mdash;</span> repositories, one registry &rarr;</a>
+    <h1>Your agent can write Azure-shaped code. Without a tenant it cannot prove it.</h1>
+    <p>Clean-room emulators of the control planes nobody else emulates (Entra ID, ARM with real
+       RBAC, Key Vault, API Management), and of the analytics engines behind a data product:
+       Fabric, Databricks and Snowflake. Local, deterministic, free, and resettable in
+       seconds.</p>
+    <p>So the agent builds, runs, reads the actual response and corrects itself hundreds of times
+       before a person looks. Then the same code points at the real service by changing environment
+       variables.</p>
+    <p class="claim">Every capability carries the test that proves it, and this page says which
+       claims are proved by something that is not us, and which are not proved at all.</p>
+    <div class="cta">
+      <a class="btn primary" href="docs/">Read the docs</a>
+      <a class="btn ghost" href="docs/06-getting-started/">Getting started</a>
+      <a class="btn ghost" href="https://github.com/calvinchengx/emulators">Source on GitHub</a>
+      <a class="btn ghost" href="#status">Honest status</a>
+    </div>
+    <div class="stats">
+      <div class="stat"><b data-d="emulators">&mdash;</b><span>services emulated</span></div>
+      <div class="stat"><b data-d="controlPlanes">&mdash;</b><span>control planes nobody else emulates</span></div>
+      <div class="stat"><b data-d="claims">&mdash;</b><span>parity claims, each naming its witness</span></div>
+      <div class="stat"><b><span data-d="evidencedLow">&mdash;</span>&ndash;<span data-d="evidencedHigh">&mdash;</span>%</b><span>of them proved by something that is not us</span></div>
+      <div class="stat"><b data-d="cells">&mdash;</b><span>cells: one product, <span data-d="engines">&mdash;</span> engines</span></div>
+      <div class="stat"><b data-d="orchestrators">&mdash;</b><span>orchestration idioms, same numbers</span></div>
+    </div>
+  </div>
+</header>
+
+<section class="sec" id="problem">
+  <div class="wrap">
+    <h2>The problem this solves</h2>
+    <p class="lede">It was never that an agent cannot write the code. It is that it cannot
+      <em>prove</em> it, and proving an Azure-shaped system means a tenant.</p>
+    <div class="grid">
+      <div class="card">
+        <h3>The loop runs through a subscription</h3>
+        <p>Minutes per round trip, state that does not reset, and a blast radius that makes an
+           agent's normal behaviour, try it and look and try again, expensive and
+           frightening. So the agent writes plausible code and a person spends weeks finding out
+           where it was wrong.</p>
+        <span class="ev">docker compose down -v · a clean tenant in seconds, for free</span>
+      </div>
+      <div class="card">
+        <h3>The four parts you cannot stub honestly</h3>
+        <p>Identity, authorization, secrets and a gateway come before anything interesting. A fake
+           token issuer teaches an agent nothing about audience mismatches, and a permissive secret
+           store teaches it nothing about RBAC. A permissive mock actively teaches the wrong
+           thing.</p>
+        <span class="ev">separate processes, separate ports, real tokens validated over HTTP</span>
+      </div>
+      <div class="card">
+        <h3>Speed without fidelity is worse than slowness</h3>
+        <p>An agent that iterates fast against a bad emulator converges fast on the wrong answer,
+           and produces confident code that fails on first contact with Azure. Fidelity is not a
+           nice-to-have here; it is the entire premise.</p>
+        <span class="ev">clean-room from published specification, never decompiled product code</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="sec">
+  <div class="wrap">
+    <h2>How it fits together</h2>
+    <p class="lede">Four cross-cutting planes in every stack, three analytics engines beside them,
+      and one data product definition that every cell installs by tag rather than copying.</p>
+    <figure>
+      <svg viewBox="0 0 940 320" width="100%" role="img" aria-labelledby="arch-t arch-d">
+        <title id="arch-t">How the family fits together</title>
+        <desc id="arch-d">An agent or application talks to four cross-cutting emulators (Entra,
+          ARM, Key Vault, APIM) and to one of three engine emulators (Fabric, Databricks,
+          Snowflake). One core data product definition and one set of vendor systems feed seven
+          cells, each a leaf product paired with a platform, which run against an engine
+          emulator locally or against the real service unchanged.</desc>
+        <defs>
+          <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M0 0 L10 5 L0 10 z" fill="var(--diagram-line)"/>
+          </marker>
+        </defs>
+
+        <rect class="ac" x="8" y="120" width="150" height="72" rx="10"/>
+        <text class="lbl" x="83" y="150" text-anchor="middle">Your agent</text>
+        <text class="sub" x="83" y="170" text-anchor="middle">or your app</text>
+
+        <path class="ar" d="M162 156 H208" marker-end="url(#ah)"/>
+
+        <rect class="bx" x="212" y="24" width="232" height="126" rx="10"/>
+        <text class="lbl" x="328" y="48" text-anchor="middle">Cross-cutting planes</text>
+        <text class="sub" x="328" y="72" text-anchor="middle">entra-emulator · the STS</text>
+        <text class="sub" x="328" y="92" text-anchor="middle">arm-emulator · RBAC</text>
+        <text class="sub" x="328" y="112" text-anchor="middle">azure-keyvault-emulator</text>
+        <text class="sub" x="328" y="132" text-anchor="middle">azure-apim-emulator</text>
+
+        <rect class="bx" x="212" y="166" width="232" height="126" rx="10"/>
+        <text class="lbl" x="328" y="190" text-anchor="middle">Analytics engines</text>
+        <text class="sub" x="328" y="214" text-anchor="middle">fabric-emulator + OneLake</text>
+        <text class="sub" x="328" y="234" text-anchor="middle">databricks-emulator</text>
+        <text class="sub" x="328" y="254" text-anchor="middle">snowflake-emulator</text>
+        <text class="sub" x="328" y="276" text-anchor="middle">real Spark, real SQL behind them</text>
+
+        <path class="ar" d="M448 87 H494" marker-end="url(#ah)"/>
+        <path class="ar" d="M448 229 H494" marker-end="url(#ah)"/>
+
+        <rect class="ac" x="498" y="88" width="196" height="144" rx="10"/>
+        <text class="lbl" x="596" y="114" text-anchor="middle">Seven cells</text>
+        <text class="sub" x="596" y="138" text-anchor="middle">leaf + platform, paired</text>
+        <text class="sub" x="596" y="158" text-anchor="middle">3 engines · 5 idioms</text>
+        <text class="sub" x="596" y="186" text-anchor="middle">one product definition,</text>
+        <text class="sub" x="596" y="204" text-anchor="middle">one set of vendors,</text>
+        <text class="sub" x="596" y="222" text-anchor="middle">installed by tag</text>
+
+        <path class="ar" d="M698 160 H744" marker-end="url(#ah)"/>
+
+        <rect class="bx" x="748" y="120" width="184" height="80" rx="10"/>
+        <text class="lbl" x="840" y="148" text-anchor="middle">The real service</text>
+        <text class="sub" x="840" y="170" text-anchor="middle">same code, different</text>
+        <text class="sub" x="840" y="186" text-anchor="middle">environment variables</text>
+      </svg>
+      <figcaption>The full inventory, generated from the registry, is in
+        <a href="docs/01-the-map/">the map</a>.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<section class="sec" id="family">
+  <div class="wrap">
+    <h2>The family</h2>
+    <p class="lede">Each emulator grades itself in a parity ledger, and every green row names the
+      test that proves it. The figure on each card is the share of that emulator's claims proved by
+      something that is not our own client: Microsoft's own SDK linked in process, or a packaged
+      third-party client running in CI.</p>
+    <div class="grid" id="emulators">
+      <div class="card">
+        <h3><code>entra-emulator</code> <span class="tag t-ship">BOM</span></h3>
+        <p>Entra ID, the STS. MSAL-compatible OIDC and OAuth2, issuing every token the others
+           validate. The single highest-value one to adopt alone, because identity is the first
+           thing that blocks local development.</p>
+        <span class="ev" data-ev="entra">&mdash;</span>
+        <p class="link"><a class="more" href="https://calvinchengx.github.io/entra-emulator/">Docs &rarr;</a></p>
+      </div>
+      <div class="card">
+        <h3><code>arm-emulator</code> <span class="tag t-ship">BOM</span></h3>
+        <p>The ARM control plane with <code>Microsoft.Authorization</code> role assignments, so
+           &ldquo;no assignment means no access&rdquo; is something an agent discovers rather than
+           something it is told. Scoped deliberately to the authorization slice, not all of ARM.</p>
+        <span class="ev" data-ev="arm">&mdash;</span>
+        <p class="link"><a class="more" href="https://calvinchengx.github.io/arm-emulator/">Docs &rarr;</a></p>
+      </div>
+      <div class="card">
+        <h3><code>azure-keyvault-emulator</code> <span class="tag t-ship">BOM</span></h3>
+        <p>The Key Vault data plane: secrets, real RSA and EC cryptography, X.509 certificates, with
+           tokens validated against ARM's RBAC rather than accepted.</p>
+        <span class="ev" data-ev="keyvault">&mdash;</span>
+        <p class="link"><a class="more" href="https://calvinchengx.github.io/azure-keyvault-emulator/">Docs &rarr;</a></p>
+      </div>
+      <div class="card">
+        <h3><code>azure-apim-emulator</code> <span class="tag t-ship">BOM</span></h3>
+        <p>Management plane, gateway and policy engine. The loop against a real APIM instance is
+           minutes per policy edit, which is exactly the cost structure that makes agent-driven
+           policy work impractical.</p>
+        <span class="ev" data-ev="apim">&mdash;</span>
+        <p class="link"><a class="more" href="https://calvinchengx.github.io/azure-apim-emulator/">Docs &rarr;</a></p>
+      </div>
+      <div class="card">
+        <h3><code>fabric-emulator</code> <span class="tag t-ship">BOM</span></h3>
+        <p>Microsoft Fabric's control plane and OneLake, with a real Spark engine behind it: notebooks,
+           Data Pipelines, a Warehouse over TDS, semantic models and Power BI over XMLA.</p>
+        <span class="ev" data-ev="fabric">&mdash;</span>
+        <p class="link"><a class="more" href="https://calvinchengx.github.io/fabric-emulator/">Docs &rarr;</a></p>
+      </div>
+      <div class="card">
+        <h3><code>databricks-emulator</code> <span class="tag t-ship">BOM</span></h3>
+        <p>The Azure Databricks workspace REST surface: Jobs, the Statement Execution API, Unity
+           Catalog, PAT and OIDC identity with entra as an optional federated issuer.</p>
+        <span class="ev" data-ev="databricks">&mdash;</span>
+        <p class="link"><a class="more" href="https://calvinchengx.github.io/databricks-emulator/">Docs &rarr;</a></p>
+      </div>
+      <div class="card">
+        <h3><code>snowflake-emulator</code> <span class="tag t-wip">adjacent</span></h3>
+        <p>A Snowflake account on DuckDB, with the same discipline: a graded ledger, a witness
+           manifest, and a checker enforcing both. Deliberately <em>outside</em> the certified
+           compose and the chain test, so the family subtotal does not quietly include it.</p>
+        <span class="ev">graded ledger · not in the BOM · not in the chain test</span>
+        <p class="link"><a class="more" href="https://calvinchengx.github.io/snowflake-emulator/">Docs &rarr;</a></p>
+      </div>
+    </div>
+    <div class="note">
+      <b>The combination is certified, not just the parts.</b>
+      <p><a href="https://calvinchengx.github.io/azure-emulators/">azure-emulators</a> holds the bill
+        of materials, the pinned <code>docker compose</code>, and a chain test that runs the whole
+        set together: <span data-d="bom">&mdash;</span> of the
+        <span data-d="emulators">&mdash;</span> emulators above. A family of parts that each pass
+        alone is not the same claim.</p>
+    </div>
+  </div>
+</section>
+
+<section class="sec">
+  <div class="wrap">
+    <h2>One product, three engines</h2>
+    <p class="lede">The concrete result, and the reason any of this is worth building.</p>
+    <p>The same Contoso data product runs on Fabric, on Databricks and on Snowflake, through
+       <span data-d="orchestrators">&mdash;</span> orchestration idioms, from four real source
+       systems through a medallion lakehouse to a semantic model. Every cell reproduces
+       <code><span data-d="revenue">&mdash;</span></code> of revenue across
+       <code><span data-d="saleLines">&mdash;</span></code> sale lines.</p>
+    <p>Porting a data product across analytics engines is normally a project with a business case.
+       It happened here because each attempt cost seconds instead of a tenant round trip, and
+       because the comparison could tell an agent it was wrong without a human reading
+       dataframes.</p>
+    <div class="note">
+      <b>And every cell now asserts those figures on a nightly of its own.</b>
+      <p>Until recently the nightlies proved a pipeline had run and nothing about the answer: a cell
+        whose gold silently returned different money would have stayed green indefinitely. All
+        <span data-d="cells">&mdash;</span> now hold their own published snapshot to figures the core
+        repository states as data. Two of them turned out not to be writing a snapshot at all.</p>
+    </div>
+  </div>
+</section>
+
+<section class="sec" id="status">
+  <div class="wrap">
+    <h2>Honest status</h2>
+    <p class="lede">The discipline here is that a claim is worth what checks it. The same rule
+      applies to this page, so the rows that are not green are on it.</p>
+    <div class="scroll">
+      <table class="tbl">
+        <thead><tr><th>Claim</th><th>Status</th><th>What backs it, or what does not</th></tr></thead>
+        <tbody>
+          <tr><td>Parity ledgers with enforced witnesses</td><td><span class="tag t-ship">shipped</span></td><td><span data-d="claims">&mdash;</span> green claims across the BOM, each bound to a named test in a witness manifest; CI fails on a dangling reference</td></tr>
+          <tr><td>Proved by something that is not us</td><td><span class="tag t-ship">measured</span></td><td><span data-d="evidencedLow">&mdash;</span>&ndash;<span data-d="evidencedHigh">&mdash;</span>% per emulator, by Microsoft's own SDKs or packaged third-party clients in CI. Run <code>family_parity.py --evidence</code> yourself rather than trusting the snapshot</td></tr>
+          <tr><td>A pinned, chain-tested family</td><td><span class="tag t-ship">shipped</span></td><td>A BOM, a certified compose and a chain test in azure-emulators</td></tr>
+          <tr><td>One product on three engines</td><td><span class="tag t-ship">witnessed</span></td><td><span data-d="cells">&mdash;</span> cells, same three figures to the last digit, each asserted by its own unattended nightly</td></tr>
+          <tr><td><strong>Diffed against real Azure</strong></td><td><span class="tag t-plan">not run</span></td><td><strong>No emulator here has Azure differential evidence.</strong> apim is the only ledger that defines the grade and it awards it zero times. Green means witnessed locally against real clients, which is a strong claim and a different one</td></tr>
+          <tr><td>The data product against a real tenant</td><td><span class="tag t-plan">not run</span></td><td>fabric-emulator's real-Fabric conformance job exists and <em>skips</em>: the credentials are incomplete, so the gate reports it and the job never runs. The workflow is green with that leg untested, which is why it says so out loud</td></tr>
+          <tr><td>snowflake-emulator in the BOM</td><td><span class="tag t-wip">deliberately not</span></td><td>Same discipline and a graded ledger, but outside the certified compose and the chain test. Joining would change what the family subtotal means, which is a release-coordination decision rather than a naming one</td></tr>
+          <tr><td>Breadth of Azure services</td><td><span class="tag t-plan">narrow on purpose</span></td><td>Seven services deep, not eighteen shallow. If you want breadth-first coverage, <a href="docs/05-why-these-emulators/">the comparison</a> says where the alternatives are better</td></tr>
+          <tr><td>arm-emulator's scope</td><td><span class="tag t-wip">scoped</span></td><td>It reads in the nineties on both metrics, on a ledger its own boundary scopes to the authorization slice rather than all of ARM. A near-perfect score on a deliberately narrow slice is the row most likely to be misread</td></tr>
+          <tr><td>Clean-room construction</td><td><span class="tag t-ship">enforced</span></td><td>From published specification and observed protocol behaviour. Nothing decompiled is ever committed, only protocol facts</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section class="sec" id="built">
+  <div class="wrap">
+    <h2>Built on it</h2>
+    <p class="lede">Not part of the family. Things built <em>with</em> it, each running locally
+      against these emulators and unchanged against real Azure.</p>
+    <div class="grid">
+      <div class="card">
+        <h3><code>data-agent-service</code> <span class="tag t-ship">shipped</span></h3>
+        <p>Natural-language questions over the warehouses, databases and APIs you already have,
+           grounded in the glossary and metrics held in OpenMetadata and fronted by API Management.
+           Each query is authorized twice: role rules in the service, then the engine under the
+           caller's own identity.</p>
+        <span class="ev">two executor images · every configured source · MCP, client-agnostic</span>
+        <p class="link"><a class="more" href="https://calvinchengx.github.io/data-agent-service/">Its landing page &rarr;</a></p>
+      </div>
+      <div class="card">
+        <h3><code>data-agent-voice</code> <span class="tag t-wip">plan and scaffolding</span></h3>
+        <p>The Analyst Line: ask aloud, and hear the answer with the definition it applied. Built
+           around a measured gap. A question upstream takes twenty-six seconds at the median and a
+           conversation reads as broken after about one, so the conversation stops waiting for
+           the agent.</p>
+        <span class="ev">no audio has ever been through it; its ledger says so</span>
+        <p class="link"><a class="more" href="https://calvinchengx.github.io/data-agent-voice/">Its landing page &rarr;</a></p>
+      </div>
+      <div class="card">
+        <h3><code>sqlglot-go</code> <span class="tag t-ship">shipped</span></h3>
+        <p>A Go port of sqlglot, verified statement by statement against the Python reference.
+           Scoped to what a read-only SQL guard needs and built outward, which is what lets the Go
+           executor above be a static binary on distroless.</p>
+        <span class="ev">verified against the reference implementation, statement by statement</span>
+        <p class="link"><a class="more" href="https://github.com/calvinchengx/sqlglot-go">Source &rarr;</a></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="sec">
+  <div class="wrap">
+    <h2>The whole ecosystem</h2>
+    <p class="lede">Generated from <code>members.json</code>, and CI fails when the picture and the
+      registry disagree. The shapes are the <a href="docs/09-the-ontology/">ontology</a>, not
+      decoration: colour is the tier, a row is a cell, and a cell is always a leaf plus a
+      platform.</p>
+    <div class="mapbox">
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="map-dark.svg">
+        <img src="map.svg" alt="One data product definition and one set of vendor systems feed seven cells. Each cell is a leaf paired with a platform, grouped under the engine emulator it targets, with four cross-cutting emulators in every stack.">
+      </picture>
+    </div>
+  </div>
+</section>
+
+<section class="sec" id="start">
+  <div class="wrap">
+    <h2>Start</h2>
+    <p class="lede">Three doors in, depending on whether you want the emulators, a whole data
+      product, or one piece of either.</p>
+    <p><b>The emulators, on their own.</b> The certified set, pinned together.</p>
+<pre><code>git clone https://github.com/calvinchengx/azure-emulators
+cd azure-emulators
+docker compose up                        # entra + keyvault + arm
+docker compose --profile fabric up       # ...and fabric
+docker compose --profile databricks up   # ...or the Databricks workspace</code></pre>
+    <p style="margin-top:24px"><b>A whole data product, end to end.</b> One launcher over every cell,
+       reading the pair, the verbs and the ports from the registry.</p>
+<pre><code>git clone https://github.com/calvinchengx/emulators
+cd emulators
+./family ls                          # every cell, its two repos, its ports
+./family up fabric-airflow3          # tells you which siblings to clone, if any
+./family witness fabric-airflow3     # exit 0 only if the numbers hold
+./family down fabric-airflow3</code></pre>
+    <p style="margin-top:24px"><b>One piece.</b> Plenty of agent work needs only identity, or only
+       identity plus RBAC. <a href="docs/04-building-with-ai-agents/#working-à-la-carte">Working à la
+       carte</a> says which combination answers which question, and
+       <a href="docs/06-getting-started/">getting started</a> has the rest of the commands.</p>
+    <div class="note">
+      <b>Give the agent the reset, and the ledger.</b>
+      <p><code>docker compose down -v</code> between attempts is what stops a corrupted run from
+        poisoning the next twenty. And when an agent hits a wall, the first question is whether the
+        emulator claims that capability at all. The parity ledger answers it in one grep,
+        which is cheaper than the agent inventing a workaround for something deliberately absent.</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <p><a href="https://github.com/calvinchengx/emulators">github.com/calvinchengx/emulators</a> is the
+       directory, not a second bill of materials. Version pinning, the certified compose and the
+       chain test live in
+       <a href="https://calvinchengx.github.io/azure-emulators/">azure-emulators</a>; this repository
+       maps the whole ecosystem, including what sits outside that BOM.</p>
+    <p>Apache-2.0. Built clean-room from published specifications and observed protocol behaviour.
+       Not affiliated with, endorsed by, or derived from the source code of Microsoft, Databricks or
+       Snowflake.</p>
+    <p>Every number on this page is read from
+       <a href="site-data.json">site-data.json</a>, generated from the registry and from the
+       ledgers. A number typed into a marketing page has no idea the ecosystem moved.</p>
+  </div>
+</footer>
+
+<script>
+  // NOTHING ON THIS PAGE IS A TYPED NUMBER. Each slot ships with an em dash and
+  // is filled from the generated manifest, because a count on a landing page is
+  // a fact about the ecosystem that changes without anyone thinking of it as a
+  // number. This repository has already published two wrong statuses in a
+  // hand-maintained table, and the sibling data-agent-service page records
+  // three numbers going stale in a single day for the same reason.
+  //
+  // The fallback is the em dash, never a guess: if the manifest cannot be read
+  // the page says nothing rather than something possibly untrue.
+  fetch('site-data.json')
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (d) {
+      if (!d) { return; }
+      Array.prototype.forEach.call(document.querySelectorAll('[data-d]'), function (el) {
+        var v = d[el.getAttribute('data-d')];
+        if (v !== undefined && v !== null) { el.textContent = v; }
+      });
+      // Per emulator, so a card states its OWN evidence rather than the
+      // family's best. An emulator with no row in the ledger table keeps its
+      // em dash instead of borrowing a neighbour's number.
+      Array.prototype.forEach.call(document.querySelectorAll('[data-ev]'), function (el) {
+        var e = (d.evidence || {})[el.getAttribute('data-ev')];
+        if (!e) { return; }
+        el.textContent = e.evidenced + '/' + e.claims + ' claims (' + e.pct +
+          '%) proved by a client that is not ours';
+      });
+    })
+    .catch(function () {});
+</script>
+</body>
+</html>
