@@ -108,6 +108,11 @@ jobs:
       - name: The committed map matches the registry
         run: ./scripts/render_map.py --check
 
+      # llms.txt is generated from the registry too, so a member added to
+      # members.json appears in it and a hand edit fails here.
+      - name: The committed llms.txt matches the registry
+        run: ./scripts/render_llms.py --check
+
       # A registry can be accurate and still incomplete, and this repo cannot
       # detect that by looking at itself: a member nobody added is simply
       # absent, and the front door renders perfectly without it. So ask GitHub.
