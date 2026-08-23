@@ -8,3 +8,6 @@ __pycache__/
 # Session worktrees. Another session's checkout can appear inside this repo,
 # and `git add -A` will otherwise commit it as an embedded git repository.
 .claude/worktrees/
+
+# Assembled by scripts/assemble_site.py for the Pages deploy.
+_site/

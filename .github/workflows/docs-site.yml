@@ -5,6 +5,11 @@ on:
     branches: [main]
     paths:
       - 'site/**'
+      - 'scripts/assemble_site.py'
+      - 'scripts/check_landing_page.py'
+      - 'scripts/site_data.py'
+      - 'website/published-routes.txt'
+      - 'Makefile'
       - 'docs/**'
       - 'website/**'
       # The landing page's numbers are generated from these two.
@@ -20,6 +25,11 @@ on:
   pull_request:
     paths:
       - 'site/**'
+      - 'scripts/assemble_site.py'
+      - 'scripts/check_landing_page.py'
+      - 'scripts/site_data.py'
+      - 'website/published-routes.txt'
+      - 'Makefile'
       - 'docs/**'
       - 'website/**'
       - 'members.json'
@@ -58,52 +68,23 @@ jobs:
         with:
           node-version: '22'
           cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter emulators-docs build
-
-      # THE LANDING PAGE ABOVE, THE DOCUMENTATION BELOW, the same shape
-      # data-agent-service and data-agent-voice already publish. The root is
-      # site/index.html and Starlight is mounted at /docs/.
+      - uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          version: "0.11.32"
+      # ONE STEP, AND IT IS THE ONE A DEVELOPER RUNS. `make docs-serve` builds
+      # with this same target and then serves the result at the paths it
+      # publishes under, so what is previewed locally is what deploys from
+      # here. Spelling the sequence out in YAML instead is how the two drift:
+      # the local recipe is the one nobody updates, and it is also the only one
+      # anyone looks at before pushing. The landing-page check used to be a
+      # heredoc in this file, which meant it ran on a deploy and never before
+      # one; it is scripts/check_landing_page.py now.
       #
-      # The map is copied rather than committed twice: render_map.py owns it,
-      # `--check` owns whether it is current, and the landing page embeds both
-      # themes with <picture>.
-      - name: Assemble the site
-        run: |
-          set -euo pipefail
-          mkdir -p _site
-          cp site/index.html _site/index.html
-          # llms.txt at the SITE root, which is where the convention says to
-          # look. The domain root would cover all eleven sites at once and is
-          # not available: it is served by a deployment last modified in April
-          # 2012, Pages is not enabled on calvinchengx.github.io, and that
-          # repository's Docusaurus config targets a different domain.
-          cp site/llms.txt _site/llms.txt
-          cp docs/map.svg docs/map-dark.svg _site/
-          cp -R website/dist _site/docs
-          ./scripts/site_data.py --out _site
-
-      # EVERY SLOT ON THE LANDING PAGE IS FILLED, checked here rather than
-      # discovered by a reader. The page ships em dashes and fills them from
-      # site-data.json at load time, so a key the generator stopped emitting
-      # would show as a dash on the published page and nowhere else.
-      - name: Every number the landing page asks for exists
-        run: |
-          python3 - <<'PY'
-          import json, re, sys, pathlib
-          page = pathlib.Path("_site/index.html").read_text(encoding="utf-8")
-          data = json.loads(pathlib.Path("_site/site-data.json").read_text(encoding="utf-8"))
-          wanted = set(re.findall(r'data-d="(\w+)"', page))
-          ev = set(re.findall(r'data-ev="(\w+)"', page))
-          missing = sorted(wanted - data.keys())
-          missing_ev = sorted(ev - set(data.get("evidence", {})))
-          if missing or missing_ev:
-              print(f"::error::the landing page asks for {missing + missing_ev} "
-                    f"and site_data.py does not emit it; those slots would publish "
-                    f"as em dashes")
-              sys.exit(1)
-          print(f"landing page: {len(wanted)} counts + {len(ev)} ledgers, all present")
-          PY
+      # What it runs is documented at the target in the Makefile. In short: the
+      # Starlight build, the assembler with its pre-move route oracle and its
+      # self-test, llms.txt and the maps at the site root, site-data.json, and
+      # the landing page, which Astro never sees.
+      - run: make docs-build
 
       - uses: actions/upload-pages-artifact@v5
         if: github.event_name != 'pull_request'
