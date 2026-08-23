@@ -49,6 +49,10 @@
           "format": "uri",
           "description": "The member's own documentation site. Omitted when it has none, so a reader is sent to the repository rather than to a 404."
         },
+        "tagline": {
+          "type": "string",
+          "description": "Reader-facing one-liner for the cross-site footer. Falls back to `role`, which is a registry descriptor and sometimes reads wrong from another site (\"This repo: ...\")."
+        },
         "role": { "type": "string" },
         "reporter": { "type": "string" },
         "conditional": { "type": "array", "items": { "type": "string" } }
