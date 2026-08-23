@@ -113,6 +113,11 @@ jobs:
       - name: The committed llms.txt matches the registry
         run: ./scripts/render_llms.py --check
 
+      # The cross-site footer is generated from the registry too, so a site
+      # added to members.json appears in every footer and a hand edit fails.
+      - name: The landing page's family footer matches the registry
+        run: ./scripts/render_footer.py --self emulators --check
+
       # A registry can be accurate and still incomplete, and this repo cannot
       # detect that by looking at itself: a member nobody added is simply
       # absent, and the front door renders perfectly without it. So ask GitHub.
