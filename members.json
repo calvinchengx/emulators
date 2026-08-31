@@ -37,6 +37,7 @@
 
     {"name": "data-agent-service",             "tier": "application", "status": "built", "ci": "required", "docs": "https://calvinchengx.github.io/data-agent-service/docs/", "tagline": "Ask your governed data a question, answered as the asking user", "role": "Governed NL questions over the estate, answered as the asking user"},
     {"name": "data-agent-voice",               "tier": "application", "status": "built", "ci": "required", "docs": "https://calvinchengx.github.io/data-agent-voice/docs/", "tagline": "The Analyst Line: ask aloud, hear the definition it applied", "role": "The Analyst Line: a voice front end over data-agent-service"},
+    {"name": "data-agent-formulator",         "tier": "application", "status": "built", "ci": "required", "tagline": "Data Formulator over the governed estate", "role": "A Data Formulator data loader that reads through data-agent-service's executor: governed tables, ungoverned exploration"},
     {"name": "sqlglot-go",                     "tier": "application", "status": "built", "ci": "required", "role": "sqlglot in Go, verified against the Python reference; the read-only SQL guard"},
     {"name": "contoso-sources",            "tier": "sources",     "status": "built", "ci": "required",  "role": "The four vendor systems, shared by every platform"},
     {"name": "contoso-data-product",       "tier": "core",        "status": "built", "ci": "required", "role": "Transforms, contracts, expected numbers"},
