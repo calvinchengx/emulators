@@ -65,13 +65,15 @@ built separately, so splitting the platform would make the fullest end-to-end
 demonstration in the ecosystem also the clearest illustration of the
 separation.
 
-**Differential evidence against real Azure.** The strongest caveat on every
-parity number today is that green means witnessed locally against real clients,
-never diffed against a live tenant. A differential harness would run the same
-client against the emulator and a real tenant and compare responses, turning
-parity claims into measured agreement. This is the single biggest available
-improvement to the evidence story and it is the one gap the ledgers cannot
-close on their own.
+**Differential evidence against real Azure.** The strongest caveat on almost
+every parity number today is that green means witnessed locally against real
+clients rather than diffed against a live tenant. entra is the exception and
+the proof the approach works: its token endpoint carries recorded comparisons
+against a real tenant behind 3 green rows. Extending that harness to the rest,
+running the same client against the emulator and a real tenant and comparing
+responses, turns parity claims into measured agreement. This is the single
+biggest available improvement to the evidence story and it is the one gap the
+ledgers cannot close on their own.
 
 **Deeper policy and expression fidelity in APIM.** Real APIM policies are
 saturated with C# expressions, so expression evaluation is the capability that

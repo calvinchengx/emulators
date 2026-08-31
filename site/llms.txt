@@ -2,9 +2,9 @@
 
 > Clean-room emulators of the control planes nobody else emulates (Entra ID, ARM with RBAC, Key Vault, API Management) and of 3 analytics engines (Fabric, Databricks, Snowflake), so an AI coding agent can build and PROVE Azure-shaped work on a laptop instead of in a tenant. The same code then points at the real service by changing environment variables.
 
-28 repositories. 7 emulators, each with a graded parity ledger whose green rows name the test that proves them. One reference data product built 7 ways across 3 engines, every cell reproducing the same figures.
+29 repositories. 7 emulators, each with a graded parity ledger whose green rows name the test that proves them. One reference data product built 7 ways across 3 engines, every cell reproducing the same figures.
 
-Nothing here is diffed against real Azure. Green means witnessed locally against real clients, which is a strong claim and a different one.
+Almost nothing here is diffed against real Azure: 3 green claims, in entra alone, rest on a recorded comparison with a live tenant. Everywhere else green means witnessed locally against real clients, which is a strong claim and a different one.
 
 ## The emulators
 
@@ -64,6 +64,7 @@ Compose, pins and provisioning for one cell. Paired one-to-one with a leaf.
 
 Not part of the family: things built with it, each running locally against these emulators and unchanged against real Azure.
 
+- [data-agent-formulator](https://github.com/calvinchengx/data-agent-formulator): A Data Formulator data loader that reads through data-agent-service's executor: governed tables, ungoverned exploration
 - [data-agent-service](https://calvinchengx.github.io/data-agent-service/docs/): Governed NL questions over the estate, answered as the asking user
 - [data-agent-voice](https://calvinchengx.github.io/data-agent-voice/docs/): The Analyst Line: a voice front end over data-agent-service
 - [sqlglot-go](https://github.com/calvinchengx/sqlglot-go): sqlglot in Go, verified against the Python reference; the read-only SQL guard
@@ -76,4 +77,4 @@ The registry every list above is generated from, plus the ecosystem docs and the
 
 ## Optional
 
-- [Every repository on GitHub](https://github.com/calvinchengx): source for all 28, including the 17 with no published documentation site.
+- [Every repository on GitHub](https://github.com/calvinchengx): source for all 29, including the 18 with no published documentation site.
