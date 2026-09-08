@@ -77,21 +77,37 @@ def ci_triggers(repo: str) -> set[str] | None:
 
 
 def ci_age_days(repo: str, now: dt.datetime) -> float | None:
-    """Age of the newest COMPLETED ci.yml run on main. None when there is none.
+    """Age of the freshest COMPLETED ci.yml run on main. None when there is none.
 
     Completed, not latest: an in-flight run is not proof of anything, and
     counting it would let a queued retry mask a proof that never landed.
+
+    A FULL PAGE, AND `updated_at`, NEITHER OF THEM OPTIONAL. The first version
+    took `workflow_runs[0]["created_at"]` off a `per_page=1` request, and it
+    read `azure-keyvault-emulator` as 23 days stale on CI while the same call
+    from a laptop, and the hub's own sweep, both said 1 day. `family_ci.py`
+    had already written down why: the API pages by `created_at` while the
+    freshest result is the greatest `updated_at`, so a run that starts before
+    the cutoff and finishes after it falls outside the window no matter how
+    the window is sized. `per_page=1` is that window narrowed to one entry,
+    and it also makes the answer depend on an ordering the API documents
+    nowhere.
+
+    So: take a page, and pick the maximum explicitly. Sorting our own page
+    costs one request and depends on nothing.
     """
     raw = gh(
         f"repos/calvinchengx/{repo}/actions/workflows/ci.yml/runs"
-        f"?branch=main&status=completed&per_page=1"
+        f"?branch=main&status=completed&per_page=100"
     )
     if raw is None:
         return None
     runs = json.loads(raw).get("workflow_runs") or []
-    if not runs:
+    stamps = [r.get("updated_at") or r.get("created_at") for r in runs]
+    stamps = [t for t in stamps if t]
+    if not stamps:
         return None
-    at = dt.datetime.fromisoformat(runs[0]["created_at"].replace("Z", "+00:00"))
+    at = dt.datetime.fromisoformat(max(stamps).replace("Z", "+00:00"))
     return (now - at).total_seconds() / 86400.0
 
 
