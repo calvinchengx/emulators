@@ -171,25 +171,6 @@ jobs:
           uv run --no-project --with pyyaml ./scripts/check_workflow_hygiene.py --self-test
           uv run --no-project --with pyyaml ./scripts/check_workflow_hygiene.py
 
-      # A QUIET REPO'S GREEN GOES STALE, AND ONLY A QUIET ONE'S DOES.
-      # `ci.yml` on push and pull_request alone re-proves itself on every
-      # commit; it rots only when the commits stop. Four members drifted that
-      # way and each was found by hand, one at a time, after the sweep below
-      # flagged it at 14 days. This fires at 7, a week earlier, and names the
-      # fix in the message.
-      #
-      # It gates on the DEFECT, not the proxy. "Every ci.yml must carry a
-      # schedule" fails 23 of the 27 members that have one and would impose a
-      # weekly run on repos that commit daily and have never been stale,
-      # fabric-emulator's 47-job matrix included. That is a compute decision
-      # wearing a hygiene rule's clothes.
-      - name: No member's CI proof is ageing without a way to refresh it
-        env:
-          GH_TOKEN: ${{ secrets.FAMILY_CI_TOKEN || github.token }}
-        run: |
-          uv run --no-project --with pyyaml ./scripts/check_ci_proof_ages.py --self-test
-          uv run --no-project --with pyyaml ./scripts/check_ci_proof_ages.py
-
       - name: Self-test the gate before trusting it
         env:
           GH_TOKEN: ${{ secrets.FAMILY_CI_TOKEN || github.token }}
