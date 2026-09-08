@@ -34,9 +34,28 @@ permissions:
 
 # Never let two sweeps overlap, and drop the older one: a stale sweep has
 # nothing to say that the newer one does not.
+# ONE GROUP FOR THE WHOLE REPOSITORY WAS THE BUG. `group: family-ci` carries
+# no branch and no sha, so EVERY run of this workflow cancelled every other one
+# whatever it was running on: a dispatch on a branch killed the verification
+# run for a push to main on 2026-09-08, and the cancelled run then reads as
+# neither pass nor fail. Worse for a reader, overlapping dispatches silently
+# displace each other, so "I re-ran it and it passed" can be a statement about
+# a run that never finished.
+#
+# MAIN COMMITS ARE NEVER CANCELLED. Every push to main gets its own group, by
+# sha, because each one is shipped and each is what a bisect will later ask
+# about. Everything else groups by ref and supersedes: a newer dispatch on a
+# branch makes the one before it worthless, and a scheduled sweep is a snapshot
+# of current state, so the newest is the only one worth finishing.
+#
+# This is the shape fabric-emulator's ci.yml arrived at after five consecutive
+# merges left main with no green CI at all, each run cancelled by the merge
+# behind it. Copying the shape, not just the flag: `cancel-in-progress: false`
+# alone would not be enough, since GitHub keeps one pending run per group and
+# would still drop the commits in the middle.
 concurrency:
-  group: family-ci
-  cancel-in-progress: true
+  group: family-ci-${{ github.event_name == 'push' && github.sha || github.ref }}
+  cancel-in-progress: ${{ github.event_name != 'push' }}
 
 jobs:
   sweep:
