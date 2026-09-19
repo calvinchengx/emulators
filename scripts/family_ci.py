@@ -106,6 +106,20 @@ def rollups(owner, names):
     return out
 
 
+def on_main(owner, name, path):
+    """Does this workflow's file exist on main?
+
+    GitHub lists a workflow forever once it has run, including one pushed on a
+    branch that was never merged, so "no runs on main" alone cannot tell a
+    deleted workflow from a phantom.
+    """
+    try:
+        gh("api", f"repos/{owner}/{name}/contents/{path}?ref=main")
+    except GhError:
+        return False
+    return True
+
+
 def workflows(owner, name):
     """Question B: latest COMPLETED run per workflow on main.
 
@@ -126,6 +140,20 @@ def workflows(owner, name):
     Completed only. An earlier watcher took the newest run whatever its status,
     so an in-flight retry cleared a known failure and it announced the red was
     gone while main was still broken.
+
+    A TAG-TRIGGERED WORKFLOW HAS NO RUNS ON MAIN, and `?branch=main` returned
+    an empty list for it rather than an error, so release.yml was dropped from
+    every row it belongs to. contoso-data-product's Release had been failing
+    since 2026-08-21 (LEAF_BUMP_TOKEN unset) and this sweep called that member
+    green for four weeks. A release run carries the TAG as its head_branch, so
+    the fallback asks without the branch filter and the row says which ref it
+    ran on.
+
+    A workflow whose file is NOT on main is a phantom: GitHub keeps listing a
+    workflow pushed once on a spike branch, and fabric-emulator carries one
+    (msmdsrv-headless.yml). Reporting it as missing CI would be noise about a
+    file nobody has, so it is skipped -- but only after the fallback, so a
+    workflow that is real and merely quiet is never dropped.
     """
     meta = gh("api", f"repos/{owner}/{name}/actions/workflows")
     best = {}
@@ -137,8 +165,16 @@ def workflows(owner, name):
         runs = gh("api", f"repos/{owner}/{name}/actions/workflows/{wf['id']}/runs"
                          f"?branch=main&status=completed&per_page=1")
         got = runs.get("workflow_runs") or []
+        off_main = False
+        if not got:
+            if not on_main(owner, name, wf["path"]):
+                continue
+            anyref = gh("api", f"repos/{owner}/{name}/actions/workflows/{wf['id']}/runs"
+                               f"?status=completed&per_page=1")
+            got = anyref.get("workflow_runs") or []
+            off_main = True
         if got:
-            best[wf["id"]] = got[0]
+            best[wf["id"]] = dict(got[0], off_main=off_main)
     return [
         {
             "file": r["path"].rsplit("/", 1)[-1],
@@ -151,6 +187,12 @@ def workflows(owner, name):
             # the fix" look identical without these two.
             "event": r.get("event"),
             "sha": (r.get("head_sha") or "")[:7],
+            # It answered on a tag, not on main. Its CONCLUSION still counts --
+            # a failed release is a failed release -- but its AGE does not:
+            # release.yml last ran whenever the last release shipped, and
+            # feeding that into `oldest proof` turned nine of ten members amber
+            # the moment this fallback landed.
+            "off_main": bool(r.get("off_main")),
         }
         for r in sorted(best.values(), key=lambda r: r["path"])
     ]
@@ -176,7 +218,8 @@ def classify(member, roll, wfs, stale_days, now, others_red=False, tip_sha=None)
            if not (w["file"] in conditional and w["conclusion"] == "skipped")]
     reds = [w for w in wfs if w["conclusion"] == "failure" or w["conclusion"] == "timed_out"]
     neutrals = [w for w in wfs if w["conclusion"] in NEUTRAL]
-    ages = [a for a in (age_days(w["at"], now) for w in wfs) if a is not None]
+    ages = [a for a in (age_days(w["at"], now) for w in wfs if not w.get("off_main"))
+            if a is not None]
     oldest = max(ages) if ages else None
 
     if expect == "required" and not wfs:
@@ -396,6 +439,98 @@ def self_test_reporter(now=None):
     return 0
 
 
+def self_test_tag_workflows():
+    """A tag-triggered workflow must be read, and a phantom must not be.
+
+    Both halves matter and they pull in opposite directions. Without the
+    fallback, release.yml is invisible and a failing Release reads as green:
+    contoso-data-product sat that way for four weeks. With a fallback and no
+    phantom guard, every workflow ever pushed on an abandoned branch comes back
+    as a row about a file main does not have.
+    """
+    calls = []
+    fake = {
+        # ci.yml: an ordinary workflow, answered on main.
+        "workflows/1/runs?branch=main": {"workflow_runs": [
+            {"path": ".github/workflows/ci.yml", "name": "CI", "conclusion": "success",
+             "updated_at": "2026-09-19T00:00:00Z", "html_url": "u", "event": "push",
+             "head_sha": "abc1234"}]},
+        # release.yml: nothing on main, file present, red on its tag.
+        "workflows/2/runs?branch=main": {"workflow_runs": []},
+        "workflows/2/runs?any": {"workflow_runs": [
+            {"path": ".github/workflows/release.yml", "name": "Release",
+             "conclusion": "failure", "updated_at": "2026-08-21T07:35:00Z",
+             "html_url": "u", "event": "push", "head_sha": "def5678"}]},
+        # spike.yml: nothing on main and no file on main either.
+        "workflows/3/runs?branch=main": {"workflow_runs": []},
+    }
+
+    def gh_stub(*args):
+        q = args[-1]
+        calls.append(q)
+        if q.endswith("/actions/workflows"):
+            return {"workflows": [
+                {"id": 1, "state": "active", "path": ".github/workflows/ci.yml"},
+                {"id": 2, "state": "active", "path": ".github/workflows/release.yml"},
+                {"id": 3, "state": "active", "path": ".github/workflows/spike.yml"},
+            ]}
+        if "/contents/" in q:
+            if "spike.yml" in q:
+                raise GhError("gh api contents", "Not Found")
+            return {"path": "x"}
+        for key, val in fake.items():
+            if key.split("?")[0] in q and (("branch=main" in q) == ("branch=main" in key)):
+                return val
+        return {"workflow_runs": []}
+
+    real = globals()["gh"]
+    globals()["gh"] = gh_stub
+    try:
+        got = workflows("o", "r")
+    finally:
+        globals()["gh"] = real
+
+    files = {w["file"]: w["conclusion"] for w in got}
+    problems = []
+    if files.get("release.yml") != "failure":
+        problems.append("a tag-triggered red release.yml was not reported: "
+                        f"{files}")
+    if "spike.yml" in files:
+        problems.append("a workflow absent from main was reported as a row")
+    if files.get("ci.yml") != "success":
+        problems.append("the ordinary main workflow was lost")
+    if not any("contents/" in c and "spike.yml" in c for c in calls):
+        problems.append("the phantom guard never checked whether the file is on main")
+    # A release that shipped months ago is not a stale proof about main, but
+    # its FAILURE is still a failure. Assert both, since the fallback made nine
+    # of ten members read amber until the age was excluded.
+    import datetime
+
+    now = datetime.datetime.now(datetime.timezone.utc)
+    fresh = now.isoformat().replace("+00:00", "Z")
+    stale = (now - datetime.timedelta(days=200)).isoformat().replace("+00:00", "Z")
+    member = {"name": "m", "tier": "leaf", "ci": "required"}
+    green_old_tag = [{"file": "ci.yml", "conclusion": "success", "at": fresh,
+                      "sha": "abc", "event": "push", "off_main": False},
+                     {"file": "release.yml", "conclusion": "success", "at": stale,
+                      "sha": "def", "event": "push", "off_main": True}]
+    verdict, _ = classify(member, None, green_old_tag, 14, now, tip_sha="abc")
+    if verdict != OK:
+        problems.append(f"an old release run made a healthy member {verdict}")
+    red_tag = [dict(green_old_tag[0]), dict(green_old_tag[1], conclusion="failure")]
+    verdict, note = classify(member, None, red_tag, 14, now, tip_sha="abc")
+    if verdict != BAD or "release.yml" not in note:
+        problems.append(f"a failed release was not reported: {verdict} {note}")
+
+    for line in problems:
+        print(f"self-test: {line}", file=sys.stderr)
+    if problems:
+        return 1
+    print("self-test: tag-triggered workflows are read and counted, their age "
+          "is not, and phantoms are skipped")
+    return 0
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("member", nargs="?", help="one member, in detail")
@@ -411,7 +546,8 @@ def main():
 
     owner, members = load_registry()
     if a.self_test:
-        return self_test(owner) or self_test_reporter()
+        return (self_test(owner) or self_test_reporter()
+                or self_test_tag_workflows())
 
     if a.member:
         known = [m["name"] for m in members]
