@@ -103,6 +103,8 @@ jobs:
       # one refuses a declaration the platform's published compose does not
       # back, so the index a launcher reads cannot drift from what `up` maps.
       - name: Declared ports match each platform's published compose
+        env:
+          GH_TOKEN: ${{ secrets.FAMILY_CI_TOKEN || github.token }}
         run: uv run --no-project --with jsonschema ./scripts/check_ontology.py --ports
 
       # The verb contract in docs/09: the Makefile floor per tier, read from
