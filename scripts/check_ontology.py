@@ -22,6 +22,7 @@ to say anything is one people learn to ignore.
 """
 import argparse
 import json
+import os
 import re
 import sys
 
@@ -182,7 +183,19 @@ def structural(members):
 
 
 def fetch(url):
-    with urllib.request.urlopen(url, timeout=20) as resp:
+    """GET a URL, authenticated when it is the GitHub API and a token is set.
+
+    api.github.com allows 60 anonymous requests an hour per IP, and hosted
+    runners share IPs: on 2026-09-27 the ports check failed Family CI with
+    "HTTP Error 403: rate limit exceeded" having made one call. A token lifts
+    that to 5,000 an hour. raw.githubusercontent.com is not rate limited
+    this way and gets no header.
+    """
+    req = urllib.request.Request(url)
+    token = os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN")
+    if token and url.startswith("https://api.github.com/"):
+        req.add_header("Authorization", f"Bearer {token}")
+    with urllib.request.urlopen(req, timeout=20) as resp:
         return resp.read().decode("utf-8")
 
 
