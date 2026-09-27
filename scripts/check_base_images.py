@@ -76,9 +76,11 @@ def is_candidate(path: str) -> bool:
     name = path.rsplit("/", 1)[-1]
     if name.startswith("Dockerfile") or name.endswith(".Dockerfile"):
         return True
-    if re.fullmatch(r"(docker-)?compose[\w.-]*\.ya?ml", name):
-        return True
-    return path.startswith(".github/workflows/") and name.endswith((".yml", ".yaml"))
+    # ANY YAML, not just `compose*.yml`: databricks-platform-jobs keeps a stack
+    # in compose/governance.yml, and a name-based filter walked straight past
+    # the Docker Hub pull in it. refs_in() reads only files that are compose
+    # (a top-level `services:`) or workflows.
+    return name.endswith((".yml", ".yaml"))
 
 
 def gh(path: str) -> str | None:
@@ -210,7 +212,9 @@ def refs_in(path: str, text: str) -> list[str]:
     name = path.rsplit("/", 1)[-1]
     if name.startswith("Dockerfile") or name.endswith(".Dockerfile"):
         return dockerfile_refs(text)
-    return compose_refs(text)
+    if path.startswith(".github/workflows/") or re.search(r"^services:", text, re.M):
+        return compose_refs(text)
+    return []
 
 
 def host_of(ref: str) -> str:
@@ -319,6 +323,8 @@ def self_test() -> int:
         ("a service that builds its own image",
          "services:\n  app:\n    build: .\n    image: app:dev\n", 0),
         ("a declared local image", "services:\n  app:\n    image: app:coverage\n", 0),
+        ("a compose file not named compose",
+         "services:\n  os:\n    image: opensearchproject/opensearch:3.4.0\n", 1),
         ("the mirror in compose",
          "services:\n  db:\n    image: mirror.gcr.io/library/postgres:16.4\n", 0),
     ]
@@ -329,7 +335,8 @@ def self_test() -> int:
         print(f"  {'ok  ' if ok else 'FAIL'} {name}: {got} complaint(s)")
         failures += not ok
     for name, text, want in compose:
-        got = len(audit("r", [("docker-compose.yml", text)], pol)[0])
+        path = "compose/governance.yml" if "not named" in name else "docker-compose.yml"
+        got = len(audit("r", [(path, text)], pol)[0])
         ok = (got > 0) == (want > 0)
         print(f"  {'ok  ' if ok else 'FAIL'} {name}: {got} complaint(s)")
         failures += not ok
