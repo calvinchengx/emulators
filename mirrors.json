@@ -12,10 +12,9 @@
     "carries would not have saved either.",
     "",
     "WHAT MAY GO IN HERE. An image the family DEPENDS ON at runtime and does not",
-    "build, whose registry is not one the family already trusts. Docker Hub and",
-    "GHCR are trusted, so opensearchproject/opensearch is deliberately absent: it",
-    "is on Hub, and mirroring it would add a copy to keep in step for no",
-    "availability gain.",
+    "build, pinned to a release that does not move, whose registry is neither",
+    "GHCR nor Docker Hub. Docker Hub images come through mirror.gcr.io instead:",
+    "see `docker_hub` below.",
     "",
     "  upstream     the vendor reference, tag included",
     "  mirror       the GHCR repository it is copied to",
@@ -45,7 +44,8 @@
         "fabric-emulator",
         "fabric-platform-notebook-pipelines",
         "databricks-platform-jobs",
-        "snowflake-platform-tasks"
+        "snowflake-platform-tasks",
+        "data-agent-service"
       ]
     },
     {
@@ -61,8 +61,45 @@
         "fabric-emulator",
         "fabric-platform-notebook-pipelines",
         "databricks-platform-jobs",
-        "snowflake-platform-tasks"
+        "snowflake-platform-tasks",
+        "data-agent-service"
       ]
     }
-  ]
+  ],
+  "docker_hub": {
+    "$comment": [
+      "How the family pulls images that live on Docker Hub: through mirror.gcr.io,",
+      "Google's pull-through cache, never from Docker Hub directly. Enforced by",
+      "scripts/check_base_images.py across every member's Dockerfiles, compose",
+      "files and workflow service containers.",
+      "",
+      "WHY. Docker Hub's anonymous token endpoint resets connections under load.",
+      "On 2026-09-27 it failed two fabric-emulator jobs in one morning before any",
+      "test ran. The cache follows every upstream rebuild, so unlike `images`",
+      "above there is no copy here to keep in step; the check compares what the",
+      "cache serves against Hub so a cache that stopped following is visible.",
+      "",
+      "  allowed_hosts  registries a reference may name. Anything else fails,",
+      "                 printed as seen: enumerate good, default deny.",
+      "  exempt         references the declaration cannot resolve, each with the",
+      "                 reason it is not a Docker Hub pull. Kept short on purpose:",
+      "                 an exemption is a claim nobody re-checks."
+    ],
+    "allowed_hosts": [
+      "mirror.gcr.io",
+      "ghcr.io",
+      "mcr.microsoft.com",
+      "gcr.io"
+    ],
+    "exempt": [
+      {
+        "pattern": "\\$\\{SPARK_AGENT_LOCAL_IMAGE.*",
+        "reason": "databricks-emulator: an image the developer built locally and names at run time"
+      },
+      {
+        "pattern": "\\$\\{NGINX_IMAGE.*",
+        "reason": "entra-emulator conformance: e2e/conformance/run.py sets it to OpenID's nginx on registry.gitlab.com, pinned by digest"
+      }
+    ]
+  }
 }

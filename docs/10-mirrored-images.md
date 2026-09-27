@@ -2,9 +2,11 @@
 
 The family runs on images it builds and images it does not. The ones it does
 not come from Docker Hub, from GHCR, and from **one vendor registry that is
-neither**. That last one is the subject of this page.
+neither**. This page covers how the family reaches the last two without
+depending on either being up.
 
 ```sh
+./scripts/check_base_images.py          # no member pulls Docker Hub directly
 ./scripts/mirror_images.py              # every mirror against its record
 ./scripts/mirror_images.py --check      # exit 1 if one is missing or moved
 ./scripts/mirror_images.py --push       # copy upstream into GHCR (needs a login)
@@ -41,13 +43,47 @@ openmetadata Error Get "https://docker.getcollate.io/v2/openmetadata/server/mani
 exactly this, and **it would not have saved either run**: two attempts nineteen
 minutes apart both failed. A retry absorbs a hiccup. This was not one.
 
-## Why not everything is mirrored
+## Docker Hub, through mirror.gcr.io
 
-`opensearchproject/opensearch` is in the same governance stack and is
-deliberately **not** here. It is on Docker Hub, which the family already trusts,
-so mirroring it would add a copy to keep in step and buy no availability. The
-rule is: mirror an image the family depends on and does not build, whose
-registry is not one it already trusts.
+Docker Hub was the registry this page used to call trusted. On 2026-09-27 its
+anonymous token endpoint reset the connection twice in one fabric-emulator
+morning, before any test ran:
+
+```
+failed to fetch oauth token: Post "https://auth.docker.io/token":
+  read tcp ...->172.64.144.78:443: read: connection reset by peer
+```
+
+So nothing in the family pulls Docker Hub directly any more. Every Hub image
+comes through **`mirror.gcr.io`**, Google's pull-through cache of Docker Hub:
+`FROM mirror.gcr.io/library/golang:1.27`, `image:
+mirror.gcr.io/apache/kafka:3.9.1@sha256:...`. data-agent-service had already
+made this move on 2026-08-23 after a release failed on a Hub pull.
+
+**Why a cache and not our own copies.** The images above are pinned vendor
+releases that never move, so copying them once is enough. Hub base images are
+the opposite: `golang:1.27` and `python:3.12-slim` are rebuilt under the same
+tag for every security fix. A copy of our own would need a job to follow each
+rebuild and a gate to notice when that job stopped. The cache follows upstream
+by construction, so there is nothing here to keep in step.
+
+**What is checked instead.** `scripts/check_base_images.py` reads every
+member's published main and fails if
+
+- a Dockerfile (`FROM`, `COPY --from`), compose file or workflow service
+  container names a Docker Hub image, or any registry outside
+  `mirrors.json`'s `docker_hub.allowed_hosts` (enumerate good, default deny);
+- `mirror.gcr.io` serves a tag with a manifest index that is not byte-identical
+  to Docker Hub's, which is what a cache that stopped following would look
+  like; or a digest pin the cache cannot serve.
+
+Measured before switching: all of the family's Hub references were served,
+every one byte-identical, so existing digest pins did not change. Docker Hub
+being unreachable during the check is reported, not failed.
+
+It does not see images named in code: the platforms' `scripts/sources.py`
+generates compose for the vendor stack, and those images were repointed by
+hand. Nor does it read `docker run` in scripts and Makefiles.
 
 ## The two things that make this a check rather than a copy
 
