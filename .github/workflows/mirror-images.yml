@@ -26,6 +26,7 @@ on:
     paths:
       - 'mirrors.json'
       - 'scripts/mirror_images.py'
+      - 'scripts/check_base_images.py'
       - '.github/workflows/mirror-images.yml'
 
 permissions:
@@ -86,6 +87,31 @@ jobs:
             echo "::warning title=A mirror is missing or moved::Not necessarily \
             this PR's doing. Run the push job, and check the packages are \
             public. The scheduled run fails on this."
+          fi
+
+      # DOCKER HUB, THROUGH mirror.gcr.io. Reads every member's published main
+      # and fails if a Dockerfile, compose file or workflow pulls Docker Hub
+      # directly, or if the cache has stopped serving what Hub serves. Same
+      # split as above: blocking on the schedule, advisory on a pull request,
+      # because a member's main is not something this PR changed.
+      - name: Self-test the base-image gate
+        run: ./scripts/check_base_images.py --self-test
+
+      - name: No family image is pulled from Docker Hub directly
+        if: github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: ./scripts/check_base_images.py
+
+      - name: No family image is pulled from Docker Hub directly (advisory)
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if ! ./scripts/check_base_images.py; then
+            echo "::warning title=A member pulls Docker Hub directly::Not \
+            necessarily this PR's doing. Repoint it to mirror.gcr.io. The \
+            scheduled run fails on this."
           fi
 
   push:
