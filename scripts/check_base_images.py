@@ -231,7 +231,7 @@ def host_of(ref: str) -> str:
 
 def judge(repo: str, path: str, ref: str, pol: dict) -> str | None:
     """None if the reference is acceptable, else why not."""
-    if any(re.fullmatch(p, ref) for p in pol.get("local", [])):
+    if any(re.fullmatch(e["pattern"], ref) for e in pol.get("exempt", [])):
         return None
     host = host_of(ref)
     if host == HUB:
@@ -292,7 +292,8 @@ def audit(repo: str, files: list[tuple[str, str]], pol: dict) -> tuple[list[str]
 # --- self-test ---------------------------------------------------------------
 
 def self_test() -> int:
-    pol = {"allowed_hosts": ["mirror.gcr.io", "ghcr.io"], "local": [r"app:\w+"]}
+    pol = {"allowed_hosts": ["mirror.gcr.io", "ghcr.io"],
+           "exempt": [{"pattern": r"app:\w+", "reason": "built locally"}]}
     cases = [
         ("a bare official image", "FROM python:3.12-slim\n", 1),
         ("a namespaced Hub image", "FROM apache/kafka:3.9.1\n", 1),

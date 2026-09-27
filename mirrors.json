@@ -45,7 +45,8 @@
         "fabric-emulator",
         "fabric-platform-notebook-pipelines",
         "databricks-platform-jobs",
-        "snowflake-platform-tasks"
+        "snowflake-platform-tasks",
+        "data-agent-service"
       ]
     },
     {
@@ -61,7 +62,8 @@
         "fabric-emulator",
         "fabric-platform-notebook-pipelines",
         "databricks-platform-jobs",
-        "snowflake-platform-tasks"
+        "snowflake-platform-tasks",
+        "data-agent-service"
       ]
     }
   ],
@@ -80,8 +82,9 @@
       "",
       "  allowed_hosts  registries a reference may name. Anything else fails,",
       "                 printed as seen: enumerate good, default deny.",
-      "  local          patterns for images a repo BUILDS and then names, which",
-      "                 read like Hub references but are never pulled."
+      "  exempt         references the declaration cannot resolve, each with the",
+      "                 reason it is not a Docker Hub pull. Kept short on purpose:",
+      "                 an exemption is a claim nobody re-checks."
     ],
     "allowed_hosts": [
       "mirror.gcr.io",
@@ -89,8 +92,15 @@
       "mcr.microsoft.com",
       "gcr.io"
     ],
-    "local": [
-      "\\$\\{SPARK_AGENT_LOCAL_IMAGE.*"
+    "exempt": [
+      {
+        "pattern": "\\$\\{SPARK_AGENT_LOCAL_IMAGE.*",
+        "reason": "databricks-emulator: an image the developer built locally and names at run time"
+      },
+      {
+        "pattern": "\\$\\{NGINX_IMAGE.*",
+        "reason": "entra-emulator conformance: e2e/conformance/run.py sets it to OpenID's nginx on registry.gitlab.com, pinned by digest"
+      }
     ]
   }
 }
