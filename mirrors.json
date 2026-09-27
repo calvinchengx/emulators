@@ -89,6 +89,8 @@
       "mcr.microsoft.com",
       "gcr.io"
     ],
-    "local": []
+    "local": [
+      "\\$\\{SPARK_AGENT_LOCAL_IMAGE.*"
+    ]
   }
 }

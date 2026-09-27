@@ -103,7 +103,10 @@ def published_files(repo: str) -> list[tuple[str, str]] | None:
 
 
 def local_files(repo: str) -> list[tuple[str, str]] | None:
-    root = HERE.parent / repo
+    return tree_files(HERE.parent / repo)
+
+
+def tree_files(root: Path) -> list[tuple[str, str]] | None:
     got = subprocess.run(["git", "-C", str(root), "ls-files"], capture_output=True, text=True)
     if got.returncode != 0:
         return None
@@ -133,6 +136,18 @@ def expand(ref: str, defaults: dict[str, str]) -> str:
     return VAR.sub(sub, ref)
 
 
+def is_stage(ref: str, stages: set[str]) -> bool:
+    """A name an earlier `FROM ... AS` defined, variables matched as wildcards.
+
+    `FROM builder-${TARGETARCH}` selects `builder-amd64` or `builder-arm64`,
+    which are stages, not images; nothing is pulled.
+    """
+    if "$" not in ref:
+        return ref.lower() in stages
+    pattern = re.sub(r"\\\$\\\{[^}]*\\\}|\\\$\w+", ".+", re.escape(ref.lower()))
+    return any(re.fullmatch(pattern, st) for st in stages)
+
+
 def dockerfile_refs(text: str) -> list[str]:
     defaults, stages, refs = {}, {"scratch"}, []
     for line in text.splitlines():
@@ -144,14 +159,14 @@ def dockerfile_refs(text: str) -> list[str]:
         m = re.match(r"FROM\s+(?:--platform=\S+\s+)?(\S+)(?:\s+AS\s+(\S+))?", s, re.I)
         if m:
             ref = expand(m.group(1), defaults)
-            if ref.lower() not in stages:
+            if not is_stage(ref, stages):
                 refs.append(ref)
             if m.group(2):
                 stages.add(m.group(2).lower())
             continue
         for m in re.finditer(r"--from=(\S+)", s):
             ref = expand(m.group(1), defaults)
-            if ref.lower() in stages or ref.isdigit():
+            if is_stage(ref, stages) or ref.isdigit():
                 continue
             refs.append(ref)
     return refs
@@ -291,6 +306,10 @@ def self_test() -> int:
          "FROM ghcr.io/x/y:1\nCOPY --from=node:22-slim /a /b\n", 1),
         ("COPY --from a stage", "FROM ghcr.io/x/y:1 AS b\nFROM ghcr.io/x/z:1\nCOPY --from=b /a /b\n", 0),
         ("an unknown registry", "FROM quay.io/x/y:1\n", 1),
+        ("a stage chosen by a variable",
+         "FROM ghcr.io/x/y:1 AS builder-amd64\nFROM ghcr.io/x/y:1 AS builder-arm64\n"
+         "FROM builder-${TARGETARCH}\n", 0),
+        ("a variable that is not a stage", "FROM ghcr.io/x/y:1 AS b\nFROM python:${V}\n", 1),
     ]
     compose = [
         ("a Hub service", "services:\n  db:\n    image: postgres:16.4\n", 1),
@@ -326,6 +345,7 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--member")
     ap.add_argument("--local", action="store_true")
+    ap.add_argument("--path", help="audit one working tree, named by --member")
     ap.add_argument("--no-digests", action="store_true")
     ap.add_argument("--self-test", action="store_true")
     args = ap.parse_args()
@@ -336,7 +356,10 @@ def main() -> int:
     names = [args.member] if args.member else members()
     bad, notes, mirrored = [], [], set()
     for repo in names:
-        files = local_files(repo) if args.local else published_files(repo)
+        if args.path:
+            files = tree_files(Path(args.path))
+        else:
+            files = local_files(repo) if args.local else published_files(repo)
         if files is None:
             bad.append(f"{repo}: could not read its files, so nothing about it is known")
             continue
