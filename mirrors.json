@@ -64,5 +64,31 @@
         "snowflake-platform-tasks"
       ]
     }
-  ]
+  ],
+  "docker_hub": {
+    "$comment": [
+      "How the family pulls images that live on Docker Hub: through mirror.gcr.io,",
+      "Google's pull-through cache, never from Docker Hub directly. Enforced by",
+      "scripts/check_base_images.py across every member's Dockerfiles, compose",
+      "files and workflow service containers.",
+      "",
+      "WHY. Docker Hub's anonymous token endpoint resets connections under load.",
+      "On 2026-09-27 it failed two fabric-emulator jobs in one morning before any",
+      "test ran. The cache follows every upstream rebuild, so unlike `images`",
+      "above there is no copy here to keep in step; the check compares what the",
+      "cache serves against Hub so a cache that stopped following is visible.",
+      "",
+      "  allowed_hosts  registries a reference may name. Anything else fails,",
+      "                 printed as seen: enumerate good, default deny.",
+      "  local          patterns for images a repo BUILDS and then names, which",
+      "                 read like Hub references but are never pulled."
+    ],
+    "allowed_hosts": [
+      "mirror.gcr.io",
+      "ghcr.io",
+      "mcr.microsoft.com",
+      "gcr.io"
+    ],
+    "local": []
+  }
 }
