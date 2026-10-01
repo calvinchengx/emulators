@@ -120,6 +120,24 @@ def on_main(owner, name, path):
     return True
 
 
+def newest_completed(owner, name, wf_id, query):
+    """The newest completed run, chosen here rather than by the API.
+
+    `?status=completed&per_page=1` twice returned a run nine days stale
+    (snowflake-platform-airflow3 acceptance, databricks-platform-jobs pins)
+    while daily greens existed, failing the hub on a red fixed long before.
+    So ask for a page without the status filter and pick by created_at; the
+    filtered query is only the fallback when the whole page is in flight.
+    """
+    base = f"repos/{owner}/{name}/actions/workflows/{wf_id}/runs?{query}"
+    runs = gh("api", f"{base}per_page=20").get("workflow_runs") or []
+    done = [r for r in runs if r.get("status") == "completed"]
+    if not done and runs:
+        done = gh("api", f"{base}status=completed&per_page=20").get(
+            "workflow_runs") or []
+    return max(done, key=lambda r: r["created_at"], default=None)
+
+
 def workflows(owner, name):
     """Question B: latest COMPLETED run per workflow on main.
 
@@ -162,19 +180,15 @@ def workflows(owner, name):
         # the repo's own CI and their run names carry the update number.
         if wf["state"] != "active" or wf["path"].startswith(GENERATED_PREFIX):
             continue
-        runs = gh("api", f"repos/{owner}/{name}/actions/workflows/{wf['id']}/runs"
-                         f"?branch=main&status=completed&per_page=1")
-        got = runs.get("workflow_runs") or []
+        got = newest_completed(owner, name, wf["id"], "branch=main&")
         off_main = False
         if not got:
             if not on_main(owner, name, wf["path"]):
                 continue
-            anyref = gh("api", f"repos/{owner}/{name}/actions/workflows/{wf['id']}/runs"
-                               f"?status=completed&per_page=1")
-            got = anyref.get("workflow_runs") or []
+            got = newest_completed(owner, name, wf["id"], "")
             off_main = True
         if got:
-            best[wf["id"]] = dict(got[0], off_main=off_main)
+            best[wf["id"]] = dict(got, off_main=off_main)
     return [
         {
             "file": r["path"].rsplit("/", 1)[-1],
@@ -450,16 +464,28 @@ def self_test_tag_workflows():
     """
     calls = []
     fake = {
-        # ci.yml: an ordinary workflow, answered on main.
+        # ci.yml: an ordinary workflow, answered on main. The page leads with a
+        # stale red and an in-flight run, as the API served it twice; the
+        # newest COMPLETED run is the green, and it must win.
         "workflows/1/runs?branch=main": {"workflow_runs": [
-            {"path": ".github/workflows/ci.yml", "name": "CI", "conclusion": "success",
+            {"path": ".github/workflows/ci.yml", "name": "CI", "status": "completed",
+             "conclusion": "failure", "created_at": "2026-09-10T00:00:00Z",
+             "updated_at": "2026-09-10T00:10:00Z", "html_url": "u", "event": "schedule",
+             "head_sha": "old0000"},
+            {"path": ".github/workflows/ci.yml", "name": "CI", "status": "in_progress",
+             "conclusion": None, "created_at": "2026-09-20T00:00:00Z",
+             "updated_at": "2026-09-20T00:01:00Z", "html_url": "u", "event": "push",
+             "head_sha": "new0000"},
+            {"path": ".github/workflows/ci.yml", "name": "CI", "status": "completed",
+             "conclusion": "success", "created_at": "2026-09-19T00:00:00Z",
              "updated_at": "2026-09-19T00:00:00Z", "html_url": "u", "event": "push",
              "head_sha": "abc1234"}]},
         # release.yml: nothing on main, file present, red on its tag.
         "workflows/2/runs?branch=main": {"workflow_runs": []},
         "workflows/2/runs?any": {"workflow_runs": [
             {"path": ".github/workflows/release.yml", "name": "Release",
-             "conclusion": "failure", "updated_at": "2026-08-21T07:35:00Z",
+             "status": "completed", "conclusion": "failure",
+             "created_at": "2026-08-21T07:30:00Z", "updated_at": "2026-08-21T07:35:00Z",
              "html_url": "u", "event": "push", "head_sha": "def5678"}]},
         # spike.yml: nothing on main and no file on main either.
         "workflows/3/runs?branch=main": {"workflow_runs": []},
@@ -498,7 +524,8 @@ def self_test_tag_workflows():
     if "spike.yml" in files:
         problems.append("a workflow absent from main was reported as a row")
     if files.get("ci.yml") != "success":
-        problems.append("the ordinary main workflow was lost")
+        problems.append("the newest completed main run did not win: "
+                        f"ci.yml read {files.get('ci.yml')}")
     if not any("contents/" in c and "spike.yml" in c for c in calls):
         problems.append("the phantom guard never checked whether the file is on main")
     # A release that shipped months ago is not a stale proof about main, but
@@ -559,6 +586,12 @@ def main():
 
     rows = collect(owner, members, a.stale_days,
                    require_rollup=not a.no_rollup_required)
+    if any(r["verdict"] == BAD for r in rows):
+        # A red must survive a second read: the runs API has served stale
+        # pages, and a real red costs one more round of requests to confirm.
+        print("family_ci: red seen, re-reading once to confirm", file=sys.stderr)
+        rows = collect(owner, members, a.stale_days,
+                       require_rollup=not a.no_rollup_required)
 
     if a.json:
         print(json.dumps({
