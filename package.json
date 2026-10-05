@@ -10,5 +10,10 @@
     "preinstall": "npx only-allow pnpm",
     "docs:dev": "pnpm --filter emulators-docs dev",
     "docs:build": "pnpm --filter emulators-docs build"
+  },
+  "pnpm": {
+    "overrides": {
+      "dompurify@>=3.4.13 <3.4.16": "^3.4.16"
+    }
   }
 }
