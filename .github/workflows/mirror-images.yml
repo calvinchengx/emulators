@@ -51,7 +51,7 @@ jobs:
     needs: [push]
     if: ${{ always() }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           # A dispatch checks out the SHA that triggered it, which predates the
           # digests the copy just committed. On every other trigger the ref
@@ -125,12 +125,12 @@ jobs:
       contents: write
       packages: write
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
 
       - name: GHCR login
-        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${GITHUB_ACTOR}" --password-stdin
 
       - name: Self-test the gate before trusting it
         run: ./scripts/mirror_images.py --self-test
