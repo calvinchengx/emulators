@@ -1,0 +1,41 @@
+version: 2
+
+# ONE npm entry, at the WORKSPACE ROOT. This repository is a pnpm workspace:
+# `website/package.json` shares the root `pnpm-lock.yaml`, and the site build
+# installs with `--frozen-lockfile`. Dependabot's default configuration opens
+# an entry per MANIFEST, so a bump under `website/` arrived with the lockfile
+# untouched and every one of those pull requests died on
+#
+#   ERR_PNPM_OUTDATED_LOCKFILE  Cannot install with "frozen-lockfile"
+#   because pnpm-lock.yaml is not up to date with website/package.json
+#
+# Pointing the ecosystem at `/` makes dependabot resolve the whole workspace
+# and update the one lockfile the build reads.
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      # Its own weekday: the family staggers the ecosystems so one day does not
+      # arrive with a dozen pull requests and their check matrices at once.
+      day: thursday
+    open-pull-requests-limit: 5
+    groups:
+      # Starlight peers a specific Astro major, so these move as a pair --
+      # majors included, or a fix that lands only in the next Astro major is
+      # stuck behind a peer conflict.
+      docs-site:
+        patterns: ['astro', '@astrojs/*', 'sharp']
+      npm-minor-patch:
+        patterns: ['*']
+        update-types: ['minor', 'patch']
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: friday
+    open-pull-requests-limit: 3
+    groups:
+      actions:
+        patterns: ['*']
